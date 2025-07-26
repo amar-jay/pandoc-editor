@@ -11,6 +11,7 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
 		"noImplicitReturns": false,
+		"noImplicitAny": false,
     "paths": {
       "@renderer/*": [
         "src/renderer/src/*"

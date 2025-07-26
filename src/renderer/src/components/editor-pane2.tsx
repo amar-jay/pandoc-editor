@@ -11,7 +11,7 @@ interface EditorPaneProps {
       characters: number
     }
   }
-  textareaRef: React.RefObject<HTMLTextAreaElement>
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>
   markdown: string
   setMarkdown: (value: string) => void
   zoom: number
@@ -74,7 +74,7 @@ export function EditorPane({
     if (lineNumbersRef.current && textareaRef.current) {
       lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop
     }
-  }, [])
+  }, [textareaRef])
 
   // Vim command execution
   const executeVimCommand = useCallback(
@@ -285,7 +285,7 @@ export function EditorPane({
         textarea.removeEventListener('keydown', handleVimKeyDown)
       }
     }
-  }, [handleScroll, updateCursorPosition, handleVimKeyDown, settings.vim])
+  }, [handleScroll, updateCursorPosition, handleVimKeyDown, settings.vim, textareaRef])
 
   // Handle regular text changes
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {

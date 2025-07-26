@@ -39,9 +39,11 @@ export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
               code: ({ className, children, node, ...props }) => {
                 const match = /language-(\w+)/.exec(className || '')
                 const language = match ? match[1] : ''
-                const inline =
-                  !((className && className.includes('language-')) ||
-                  node?.parent?.tagName === 'pre')
+                const inline = !(
+                  (className && className.includes('language-')) ||
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (node as any)?.parent?.tagName === 'pre'
+                )
                 if (!inline && language === 'mermaid') {
                   return <MermaidRenderer code={String(children).replace(/\n$/, '')} />
                 }
@@ -49,7 +51,7 @@ export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
                 if (inline) {
                   return (
                     <code
-          						className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground"
+                      className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground"
                       {...props}
                     >
                       {children}
@@ -59,7 +61,7 @@ export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
 
                 return (
                   <code
-						        className={`block bg-muted p-4 rounded-lg text-sm font-mono overflow-x-auto ${className || ''}`}
+                    className={`block bg-muted p-4 rounded-lg text-sm font-mono overflow-x-auto ${className || ''}`}
                     {...props}
                   >
                     {children}

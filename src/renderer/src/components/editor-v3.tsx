@@ -104,12 +104,12 @@ export default function AdvancedMarkdownEditor() {
         </div>
 
         {/* Status Bar */}
-        <div className="flex items-center justify-between mt-4 p-2 bg-muted/50 rounded-md text-sm text-muted-foreground">
+        <div className="flex items-center justify-between mt-4 p-2 bg-primary/90 text-secondary rounded-md text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
             <span>Words: {states.documentStats.words}</span>
-            <span>Characters: {states.documentStats.characters}</span>
+            <span>Char: {states.documentStats.characters}</span>
             <span>Paragraphs: {states.documentStats.paragraphs}</span>
-            <span>Reading time: {states.documentStats.readingTime} min</span>
+            <span>Time: {states.documentStats.readingTime} min</span>
           </div>
           <div className="flex items-center gap-4">
             {settings.settings.autoSave && <span>Auto-save: ON</span>}

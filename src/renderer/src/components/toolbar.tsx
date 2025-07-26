@@ -31,6 +31,7 @@ import { Button } from './ui/button'
 import { Separator } from './ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import { SettingsDialog } from './settings-dialog'
+import { MarkdownFileBrowser } from './markdown-file-browser'
 import { EditorSettings, EditorStates } from '@renderer/lib/types'
 import type { useEditorHook } from './hooks/editor-hook'
 
@@ -56,19 +57,38 @@ export function Toolbar({
   setViewMode
 }: ToolbarProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 pr-5">
       {/* File Operations */}
-      <Button variant="ghost" size="sm" onClick={handlers.handleNew} title="New (Ctrl+N)">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handlers.handleNew}
+        className=" hidden lg:block"
+        title="New (Ctrl+N)"
+      >
         <FileText className="w-4 h-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={handlers.handleOpen} title="Open (Ctrl+O)">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handlers.handleOpen}
+        className=" hidden lg:block"
+        title="Open (Ctrl+O)"
+      >
         <Upload className="w-4 h-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={handlers.handleSave} title="Save (Ctrl+S)">
+      {/* <MarkdownFileBrowser onFileSelect={handlers.handleFileSelect} /> */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handlers.handleSave}
+        className=" hidden lg:block"
+        title="Save (Ctrl+S)"
+      >
         <Save className="w-4 h-4" />
       </Button>
 
-      <Separator orientation="vertical" className="h-6 border-2" />
+      <Separator orientation="vertical" className="h-6 border-2 hidden lg:block" />
 
       {/* Undo/Redo */}
       <Button
@@ -122,6 +142,7 @@ export function Toolbar({
         size="sm"
         onClick={() => handlers.insertMarkdown('`', '`')}
         title="Inline Code"
+        className=" hidden lg:block"
       >
         <Code className="w-4 h-4" />
       </Button>
