@@ -1,0 +1,132 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Search, X } from 'lucide-react'
+import { useEditorHook, useKeyboardShortcuts } from './hooks/editor-hook'
+import { PreviewPane } from './preview-pane'
+import { EditorPane } from './editor-pane2'
+import { Toolbar } from './toolbar'
+
+export default function AdvancedMarkdownEditor() {
+  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split')
+  const [zoom, setZoom] = useState(100)
+  const { states, search, handlers, settings, refs } = useEditorHook('Untitled.md')
+
+  useKeyboardShortcuts(handlers, states)
+  return (
+    <div
+      className={`min-h-screen bg-background transition-all duration-300 ${states.isFullscreen ? 'fixed inset-0 z-50' : ''}`}
+    >
+      {/* Header */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                {states.currentFileName}
+                {states.isModified && '*'}
+              </span>
+            </div>
+
+            {/* Toolbar */}
+            <Toolbar
+              states={states}
+              handlers={handlers}
+              settings={settings}
+              zoom={zoom}
+              setZoom={setZoom}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      {search.showSearch && (
+        <div className="absolute top-20 border-2 left-1/2 transform -translate-x-1/2 flex items-center max-w-xl gap-2 p-2 bg-muted rounded-md z-50 shadow-md">
+          <Search className="w-4 h-4" />
+          <Input
+            placeholder="Search..."
+            value={states.searchTerm}
+            onChange={(e) => search.setSearchTerm(e.target.value)}
+            className="flex-1"
+            onKeyDown={(e) => e.key === 'Enter' && handlers.handleSearch()}
+          />
+          <Input
+            placeholder="Replace..."
+            value={states.replaceTerm}
+            onChange={(e) => search.setReplaceTerm(e.target.value)}
+            className="flex-1"
+          />
+          <Button size="sm" onClick={handlers.handleSearch}>
+            Find
+          </Button>
+          <Button size="sm" onClick={handlers.handleReplace}>
+            Replace All
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handlers.toggleShowSearch()}
+            className="cursor-pointer hover:bg-red-100 hover:text-red-600"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="container mx-auto p-4">
+        <div
+          className={`grid gap-4 h-[calc(100vh-140px)] ${
+            viewMode === 'split' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
+          }`}
+        >
+          {/* Editor Pane */}
+          {(viewMode === 'edit' || viewMode === 'split') && (
+            <EditorPane
+              states={states}
+              textareaRef={refs.textareaRef}
+              markdown={states.markdown}
+              setMarkdown={handlers.setMarkdown}
+              zoom={zoom}
+              settings={settings.settings}
+            />
+          )}
+
+          {/* Preview Pane */}
+          {(viewMode === 'preview' || viewMode === 'split') && (
+            <PreviewPane markdown={states.markdown} zoom={zoom} states={states} />
+          )}
+        </div>
+
+        {/* Status Bar */}
+        <div className="flex items-center justify-between mt-4 p-2 bg-muted/50 rounded-md text-sm text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span>Words: {states.documentStats.words}</span>
+            <span>Characters: {states.documentStats.characters}</span>
+            <span>Paragraphs: {states.documentStats.paragraphs}</span>
+            <span>Reading time: {states.documentStats.readingTime} min</span>
+          </div>
+          <div className="flex items-center gap-4">
+            {settings.settings.autoSave && <span>Auto-save: ON</span>}
+            <span>Zoom: {zoom}%</span>
+            <span>{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} mode</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={refs.fileInputRef}
+        type="file"
+        accept=".md,.txt"
+        onChange={handlers.handleFileLoad}
+        className="hidden"
+      />
+    </div>
+  )
+}
