@@ -1,8 +1,14 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  findMarkdownFiles: (dirPath?: string) => ipcRenderer.invoke('find-markdown-files', dirPath),
+  readFileByPath: (filePath: string) => ipcRenderer.invoke('read-file-by-path', filePath),
+  saveFile: (filePath: string, content: string) =>
+    ipcRenderer.invoke('save-file', filePath, content),
+  getFileTree: (dirPath?: string) => ipcRenderer.invoke('get-file-tree', dirPath)
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

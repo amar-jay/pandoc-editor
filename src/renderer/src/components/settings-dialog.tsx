@@ -156,13 +156,18 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
 
             {settings.settings.vim && (
               <>
-                <span className="text-xs font-semibold text-accent-foreground/50 p-0 mt-0">Vim Settings</span>
+                <span className="text-xs font-semibold text-accent-foreground/50 p-0 mt-0">
+                  Vim Settings
+                </span>
                 <div className="flex items-center justify-between">
                   <Label>Cursor</Label>
                   <Select
                     value={settings.settings.cursorStyle ? settings.settings.cursorStyle : 'block'}
-                    onValueChange={(value: EditorSettings['cursorStyle']) =>
-                      settings.setSettings({ ...settings.settings, cursorStyle: value })
+                    onValueChange={(value: string) =>
+                      settings.setSettings({
+                        ...settings.settings,
+                        cursorStyle: value as EditorSettings['cursorStyle']
+                      })
                     }
                   >
                     <SelectTrigger>

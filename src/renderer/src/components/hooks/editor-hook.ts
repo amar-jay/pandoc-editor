@@ -234,6 +234,40 @@ export function useEditorHook(fileName: string) {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const handleFileSelect = async (filePath: string) => {
+    try {
+      const result = await window.api.readFileByPath(filePath)
+      if (result.success && result.content && result.fileName) {
+        if (isModified) {
+          if (confirm('You have unsaved changes. Are you sure you want to open a new file?')) {
+            setUndoStack([...undoStack, markdown])
+            setRedoStack([])
+            setMarkdown(result.content)
+            setCurrentFileName(result.fileName)
+            setRecentFiles(
+              [result.fileName, ...recentFiles.filter((f) => f !== result.fileName)].slice(0, 5)
+            )
+            setIsModified(false)
+          }
+        } else {
+          setUndoStack([...undoStack, markdown])
+          setRedoStack([])
+          setMarkdown(result.content)
+          setCurrentFileName(result.fileName)
+          setRecentFiles(
+            [result.fileName, ...recentFiles.filter((f) => f !== result.fileName)].slice(0, 5)
+          )
+          setIsModified(false)
+        }
+      } else {
+        alert(`Error loading file: ${result.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error loading file:', error)
+      alert('Error loading file. Please try again.')
+    }
+  }
+
   return {
     handlers: {
       handleExport,
@@ -241,6 +275,7 @@ export function useEditorHook(fileName: string) {
       handleSave,
       handleNew,
       handleFileLoad,
+      handleFileSelect,
       handleUndo,
       handleRedo,
       handleSearch,

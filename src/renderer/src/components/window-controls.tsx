@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { Minus, Square, X, Folder } from 'lucide-react'
+import { Folder } from 'lucide-react'
 
 export const WindowsTitlebar = () => {
   return (

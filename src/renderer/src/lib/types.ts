@@ -22,7 +22,7 @@ export interface EditorSettings {
   autoSave: boolean
   spellCheck: boolean
   vim: boolean
-  cursorStyle: 'default' | 'thick' | 'block' | 'underline'
+  cursorStyle?: 'default' | 'thick' | 'block' | 'underline'
 }
 
 export interface DocumentStats {
@@ -33,3 +33,18 @@ export interface DocumentStats {
   paragraphs: number
   readingTime: number
 }
+
+type FileNode = {
+  name: string
+  type: 'file'
+  path: string
+}
+
+type FolderNode = {
+  name: string
+  type: 'folder'
+  path: string
+  children: TreeNode[]
+}
+
+export type TreeNode = FileNode | FolderNode

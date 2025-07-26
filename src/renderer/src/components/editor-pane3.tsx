@@ -85,7 +85,7 @@ export function EditorPane({
     if (lineNumbersRef.current && textareaRef.current) {
       lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop
     }
-  }, [])
+  }, [textareaRef])
 
   // Vim command execution
   const executeVimCommand = useCallback(
