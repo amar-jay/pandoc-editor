@@ -80,6 +80,17 @@ app.whenReady().then(() => {
   // IPC handler to read a file by path
   ipcMain.handle('read-file-by-path', async (_, filePath: string) => {
     try {
+      const dirname = path.dirname(filePath)
+      if (
+        filePath.startsWith('/') ||
+        dirname === '.' ||
+        dirname === '' ||
+        dirname.startsWith('\\')
+      ) {
+        filePath = path.join(os.homedir(), '.pandoc-editor', filePath)
+      } else if (!filePath.endsWith('.md')) {
+        filePath += '.md'
+      }
       const content = await fs.promises.readFile(filePath, 'utf-8')
       const fileName = path.basename(filePath)
       return { success: true, content, fileName }
@@ -95,15 +106,21 @@ app.whenReady().then(() => {
   // IPC handler to save a file
   ipcMain.handle('save-file', async (_, filePath: string, content: string) => {
     try {
-      let dir = path.dirname(filePath)
-      if (dir == '.' || dir == '') {
-        dir = os.homedir() + '/.pandoc-editor'
-      }
-      if (!filePath.endsWith('.md')) {
+      const dirname = path.dirname(filePath)
+      if (
+        filePath.startsWith('/') ||
+        dirname === '.' ||
+        dirname === '' ||
+        dirname.startsWith('\\')
+      ) {
+        filePath = path.join(os.homedir(), '.pandoc-editor', filePath)
+      } else if (!filePath.endsWith('.md')) {
         filePath += '.md'
+      } else {
+        await fs.promises.mkdir(dirname, { recursive: true })
       }
+      console.log('Saving file to:', dirname, filePath)
       // Ensure the directory exists
-      await fs.promises.mkdir(dir, { recursive: true })
       await fs.promises.writeFile(filePath, content, 'utf-8')
       return { success: true }
     } catch (error) {

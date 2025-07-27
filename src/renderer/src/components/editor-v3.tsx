@@ -4,19 +4,20 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, X } from 'lucide-react'
-import { useEditorHook, useKeyboardShortcuts } from './hooks/editor-hook'
+import { useKeyboardShortcuts } from './hooks/editor-hook'
 import { PreviewPane } from './preview-pane'
 import { EditorPane } from './editor-pane2'
 import { Toolbar } from './toolbar'
+import { EditorHookReturn } from '@renderer/lib/types'
 
 export default function AdvancedMarkdownEditor({
-  fileInputRef
+  editorStates
 }: {
-  fileInputRef: React.RefObject<HTMLInputElement | null>
+  editorStates: EditorHookReturn
 }): React.JSX.Element {
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split')
   const [zoom, setZoom] = useState(100)
-  const { states, search, handlers, settings, refs, markdown } = useEditorHook(fileInputRef)
+  const { states, search, handlers, settings, refs, markdown } = editorStates
 
   useKeyboardShortcuts(handlers, search.toggleSearch)
   return (
@@ -36,7 +37,7 @@ export default function AdvancedMarkdownEditor({
 
             {/* Toolbar */}
             <Toolbar
-							search={search}
+              search={search}
               states={states}
               handlers={handlers}
               settings={settings}

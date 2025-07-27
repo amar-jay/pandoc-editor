@@ -68,6 +68,7 @@ export interface EditorHandlers {
   createNewFile: () => void
   openFile: () => void
   handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  openFileWithPath: (path: string) => void
   exportFile: (format: 'html' | 'txt' | 'md') => void
   insertMarkdown: (before: string, after?: string) => void
   undo: () => void

@@ -1,34 +1,9 @@
 # pandoc-editor
 
-An Electron application with React and TypeScript
+Pandoc Editor is just another cross-platform Markdown editor specifically built for creating and editing academic writings in markdown. It currently supports LaTeX, MathJax and soon to support Mermaid diagrams. 
+We plan to implement pandoc support for direct export to PDF. 
 
-## Recommended IDE Setup
-
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-
-## Project Setup
-
-### Install
-
-```bash
-$ pnpm install
-```
-
-### Development
-
-```bash
-$ pnpm dev
-```
-
-### Build
-
-```bash
-# For windows
-$ pnpm build:win
-
-# For macOS
-$ pnpm build:mac
-
-# For Linux
-$ pnpm build:linux
-```
+## TODO:
+- [ ] Implement pandoc support for direct export to PDF.
+- [ ] Implement Mermaid diagrams support.
+- [ ] Cross-platform support for Windows, Mac and Linux.
