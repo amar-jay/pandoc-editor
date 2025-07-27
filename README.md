@@ -7,3 +7,9 @@ We plan to implement pandoc support for direct export to PDF.
 - [x] Implement pandoc support for direct export to PDF.
 - [x] Implement Mermaid diagrams support.
 - [ ] Cross-platform support for Windows, Mac and Linux.
+
+
+<p float="left">
+  <img src="https://github.com/user-attachments/assets/ff2565ef-9085-4458-9296-f5b405eba5eb" width="45%" />
+  <img src="https://github.com/user-attachments/assets/070e6fd4-b2fa-47c9-a9f9-3543a9883599" width="45%" />
+</p>
