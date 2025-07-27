@@ -10,6 +10,7 @@ import {
 import { calculateStats } from '@renderer/lib/utils'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { defaultMarkdown } from '../default-markdown'
+import { string } from 'zod'
 
 // Constants
 const STORAGE_KEYS = {
@@ -50,9 +51,7 @@ const confirmUnsavedChanges = (): boolean => {
   return confirm('You have unsaved changes. Are you sure you want to continue?')
 }
 
-export function useEditorHook(
-  fileInputRef: React.RefObject<HTMLInputElement | null>
-): EditorHookReturn {
+export function useEditorHook(): EditorHookReturn {
   // Core state
   const [markdown, setMarkdownState] = useState('')
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null)
@@ -102,6 +101,7 @@ export function useEditorHook(
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const copiedTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const cursorTimeoutRefs = useRef<Set<NodeJS.Timeout>>(new Set())
@@ -205,14 +205,14 @@ export function useEditorHook(
 
       try {
         const result = await window.api.readFileByPath(filePath)
-        if (result.success && result.content) {
-          setMarkdownState(result.content)
+        if (result.success) {
+          setMarkdownState(result.content || '')
           setCurrentFilePath(filePath)
           setCurrentFileName(result.fileName || 'Untitled.md')
           setIsModified(false)
           setUndoStack([])
           setRedoStack([])
-          updateDocumentStats(result.content)
+          updateDocumentStats(result.content || '')
 
           // Update recent files
           setRecentFiles((prev) => {
@@ -220,7 +220,9 @@ export function useEditorHook(
             return [filePath, ...filtered].slice(0, MAX_RECENT_FILES)
           })
         } else {
-          showError(`Failed to load file: ${result.error || 'Unknown error'}`)
+          showError(
+            `Failed to load file: ${result.error || 'Unknown error'}, ${JSON.stringify(result)}`
+          )
         }
       } catch (error) {
         showError('Error loading file. Please try again.', error)
@@ -293,6 +295,33 @@ export function useEditorHook(
   }, [fileInputRef])
 
   // Handler for when a file is selected via the file input
+
+  const handleFileInputChangeIPC = useCallback(
+    async (path: string) => {
+      const file = await window.api.readFileByPath(path)
+
+      if (file) {
+        if (file.error) {
+          return showError(`Failed to read file: ${file.error || 'Unknown error'}`)
+        }
+        if (!file.content) {
+          return showError('File is empty or could not be read.')
+        }
+        if (!file.fileName) {
+          return showError('File name is missing.')
+        }
+        setMarkdownState(file.content || '')
+        setCurrentFilePath(path)
+        setCurrentFileName(file.fileName || 'Untitled.md')
+        setIsModified(false)
+        setUndoStack([])
+        setRedoStack([])
+        updateDocumentStats(file.content || '')
+      }
+    },
+    [updateDocumentStats]
+  )
+
   const handleFileInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
@@ -586,6 +615,7 @@ export function useEditorHook(
     saveFileAs,
     createNewFile,
     openFile,
+    openFileWithPath: handleFileInputChangeIPC,
     handleFileInputChange,
     exportFile,
     insertMarkdown,
