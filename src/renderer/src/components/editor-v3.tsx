@@ -110,7 +110,7 @@ export default function AdvancedMarkdownEditor({
         </div>
 
         {/* Status Bar */}
-        <div className="flex items-center justify-between mt-4 p-2 bg-primary/90 text-secondary rounded-md text-xs">
+        <div className="flex items-center justify-between mt-4 p-2 bg-primary/90 text-secondary rounded-md text-xs dark:text-secondary-foreground">
           <div className="flex items-center gap-4">
             <span>Words: {states.documentStats.words}</span>
             <span>Char: {states.documentStats.characters}</span>
