@@ -14,15 +14,8 @@ A feature-rich, cross-platform Markdown editor specifically designed for academi
 
 This entire application was conceived, designed, and built in **just 2 days** using the power of AI-assisted development. Working alongside **Claude Sonnet 4.0** and **GitHub Copilot**, we've created a sophisticated markdown editor that rivals applications that traditionally take weeks or months to develop.
 
-### 🤖 AI-Powered Development in Action
-
 - **Day 1**: Architecture planning, UI/UX design, and core editor implementation
 - **Day 2**: Advanced features, Pandoc integration, and polishing
-
-This project demonstrates how AI tools have revolutionized software development in 2025:
-- **Claude Sonnet 4.0**: Strategic planning, complex problem-solving, and architectural decisions
-- **GitHub Copilot**: Rapid code generation, boilerplate reduction, and intelligent autocomplete
-- **Human creativity**: Vision, design choices, and quality assurance
 
 ## 🎯 Key Features
 
@@ -53,28 +46,6 @@ This project demonstrates how AI tools have revolutionized software development 
 - **Extras**:
   - Word count, reading time
   - Pandoc integration with bundled executable
-
-### Installation & Development
-
-```bash
-# Clone the repository
-git clone https://github.com/amar-jay/pandoc-editor.git
-cd pandoc-editor
-
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Package for distribution
-pnpm build:linux    # Linux
-pnpm build:win      # Windows  
-pnpm build:mac      # macOS
-```
 
 ## 🎯 Export Capabilities
 
