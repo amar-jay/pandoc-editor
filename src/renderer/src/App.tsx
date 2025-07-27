@@ -10,15 +10,17 @@ function App(): React.JSX.Element {
   const editorStates = useEditorHook()
 
   return (
-    <SidebarProvider>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-        <AppSidebar handleFileSelect={editorStates.handlers.loadFile}/>
-        <SidebarInset>
-          <WindowsTitlebar />
-          <MarkdownEditor editorStates={editorStates}/>
-        </SidebarInset>
-      </ThemeProvider>
-    </SidebarProvider>
+    <div className="app-container">
+      <SidebarProvider>
+        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <AppSidebar handleFileSelect={editorStates.handlers.loadFile} />
+          <SidebarInset>
+            <WindowsTitlebar />
+            <MarkdownEditor editorStates={editorStates} />
+          </SidebarInset>
+        </ThemeProvider>
+      </SidebarProvider>
+    </div>
   )
 }
 
