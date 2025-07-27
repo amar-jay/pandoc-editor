@@ -31,23 +31,23 @@ import { Button } from './ui/button'
 import { Separator } from './ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import { SettingsDialog } from './settings-dialog'
-import { MarkdownFileBrowser } from './markdown-file-browser'
-import { EditorSettings, EditorStates } from '@renderer/lib/types'
+// import { MarkdownFileBrowser } from './markdown-file-browser'
+import { EditorSettings, EditorStates, SearchHandlers } from '@renderer/lib/types'
 import type { useEditorHook } from './hooks/editor-hook'
+import SaveFileAsDialog from './filepath-dialog'
 
 interface ToolbarProps {
+  search: SearchHandlers
   states: EditorStates
   handlers: ReturnType<typeof useEditorHook>['handlers']
-  settings: {
-    settings: EditorSettings
-    setSettings: React.Dispatch<React.SetStateAction<EditorSettings>>
-  }
+  settings: EditorSettings
   zoom: number
   setZoom: (value: number) => void
   viewMode: 'edit' | 'preview' | 'split'
   setViewMode: (mode: 'edit' | 'preview' | 'split') => void
 }
 export function Toolbar({
+  search,
   states,
   handlers,
   settings,
@@ -62,7 +62,7 @@ export function Toolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={handlers.handleNew}
+        onClick={handlers.createNewFile}
         className=" hidden lg:block"
         title="New (Ctrl+N)"
       >
@@ -71,7 +71,7 @@ export function Toolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={handlers.handleOpen}
+        onClick={handlers.openFile}
         className=" hidden lg:block"
         title="Open (Ctrl+O)"
       >
@@ -81,12 +81,13 @@ export function Toolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={handlers.handleSave}
+        onClick={handlers.saveFile}
         className=" hidden lg:block"
         title="Save (Ctrl+S)"
       >
         <Save className="w-4 h-4" />
       </Button>
+      <SaveFileAsDialog saveFileAs={handlers.saveFileAs} />
 
       <Separator orientation="vertical" className="h-6 border-2 hidden lg:block" />
 
@@ -94,7 +95,7 @@ export function Toolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={handlers.handleUndo}
+        onClick={handlers.undo}
         disabled={states.undoStack.length === 0}
         title="Undo (Ctrl+Z)"
       >
@@ -103,7 +104,7 @@ export function Toolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={handlers.handleRedo}
+        onClick={handlers.redo}
         disabled={states.redoStack.length === 0}
         title="Redo (Ctrl+Shift+Z)"
       >
@@ -266,7 +267,7 @@ export function Toolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => handlers.toggleShowSearch()}
+        onClick={() => search.toggleSearch()}
         title="Search (Ctrl+F)"
       >
         <Search className="w-4 h-4" />
@@ -292,15 +293,15 @@ export function Toolbar({
             <DialogTitle>Export Document</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4">
-            <Button onClick={() => handlers.handleExport('md')} className="justify-start">
+            <Button onClick={() => handlers.exportFile('md')} className="justify-start">
               <FileText className="w-4 h-4 mr-2" />
               Export as Markdown (.md)
             </Button>
-            <Button onClick={() => handlers.handleExport('html')} className="justify-start">
+            <Button onClick={() => handlers.exportFile('html')} className="justify-start">
               <FileDown className="w-4 h-4 mr-2" />
               Export as HTML (.html)
             </Button>
-            <Button onClick={() => handlers.handleExport('txt')} className="justify-start">
+            <Button onClick={() => handlers.exportFile('txt')} className="justify-start">
               <FileText className="w-4 h-4 mr-2" />
               Export as Text (.txt)
             </Button>
@@ -309,12 +310,16 @@ export function Toolbar({
       </Dialog>
 
       {/* Settings Dialog */}
-      <SettingsDialog settings={settings} recentFiles={states.recentFiles} />
+      <SettingsDialog
+        settings={settings}
+        updateSettings={handlers.updateSettings}
+        recentFiles={states.recentFiles}
+      />
 
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => handlers.setIsFullscreen(!states.isFullscreen)}
+        onClick={() => handlers.toggleFullscreen()}
         title="Toggle Fullscreen (F11)"
       >
         {states.isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}

@@ -8,7 +8,7 @@ export const WindowsTitlebar = () => {
         {/* App Icon and Title */}
         <div className="flex items-center px-2 flex-1">
           <Folder className="w-4 h-4 text-blue-600 mr-2" />
-          <span className="text-sm text-gray-800 font-normal">My Application</span>
+          <span className="text-sm text-gray-800 font-normal">Pandoc Editor</span>
         </div>
       </div>
     </div>

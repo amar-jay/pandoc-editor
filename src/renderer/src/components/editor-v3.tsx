@@ -9,12 +9,16 @@ import { PreviewPane } from './preview-pane'
 import { EditorPane } from './editor-pane2'
 import { Toolbar } from './toolbar'
 
-export default function AdvancedMarkdownEditor() {
+export default function AdvancedMarkdownEditor({
+  fileInputRef
+}: {
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+}): React.JSX.Element {
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split')
   const [zoom, setZoom] = useState(100)
-  const { states, search, handlers, settings, refs } = useEditorHook('Untitled.md')
+  const { states, search, handlers, settings, refs, markdown } = useEditorHook(fileInputRef)
 
-  useKeyboardShortcuts(handlers, states)
+  useKeyboardShortcuts(handlers, search.toggleSearch)
   return (
     <div
       className={`min-h-screen bg-background transition-all duration-300 ${states.isFullscreen ? 'fixed inset-0 z-50' : ''}`}
@@ -32,6 +36,7 @@ export default function AdvancedMarkdownEditor() {
 
             {/* Toolbar */}
             <Toolbar
+							search={search}
               states={states}
               handlers={handlers}
               settings={settings}
@@ -53,7 +58,7 @@ export default function AdvancedMarkdownEditor() {
             value={states.searchTerm}
             onChange={(e) => search.setSearchTerm(e.target.value)}
             className="flex-1"
-            onKeyDown={(e) => e.key === 'Enter' && handlers.handleSearch()}
+            onKeyDown={(e) => e.key === 'Enter' && search.search()}
           />
           <Input
             placeholder="Replace..."
@@ -61,16 +66,16 @@ export default function AdvancedMarkdownEditor() {
             onChange={(e) => search.setReplaceTerm(e.target.value)}
             className="flex-1"
           />
-          <Button size="sm" onClick={handlers.handleSearch}>
+          <Button size="sm" onClick={search.search}>
             Find
           </Button>
-          <Button size="sm" onClick={handlers.handleReplace}>
+          <Button size="sm" onClick={search.replaceAll}>
             Replace All
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => handlers.toggleShowSearch()}
+            onClick={() => search.toggleSearch()}
             className="cursor-pointer hover:bg-red-100 hover:text-red-600"
           >
             <X className="w-4 h-4" />
@@ -90,21 +95,21 @@ export default function AdvancedMarkdownEditor() {
             <EditorPane
               states={states}
               textareaRef={refs.textareaRef}
-              markdown={states.markdown}
+              markdown={markdown}
               setMarkdown={handlers.setMarkdown}
               zoom={zoom}
-              settings={settings.settings}
+              settings={settings}
             />
           )}
 
           {/* Preview Pane */}
           {(viewMode === 'preview' || viewMode === 'split') && (
-            <PreviewPane markdown={states.markdown} zoom={zoom} states={states} />
+            <PreviewPane markdown={markdown} zoom={zoom} states={states} />
           )}
         </div>
 
         {/* Status Bar */}
-        <div className="flex items-center justify-between mt-4 p-2 bg-primary/90 text-secondary rounded-md text-xs text-muted-foreground">
+        <div className="flex items-center justify-between mt-4 p-2 bg-primary/90 text-secondary rounded-md text-xs">
           <div className="flex items-center gap-4">
             <span>Words: {states.documentStats.words}</span>
             <span>Char: {states.documentStats.characters}</span>
@@ -112,7 +117,7 @@ export default function AdvancedMarkdownEditor() {
             <span>Time: {states.documentStats.readingTime} min</span>
           </div>
           <div className="flex items-center gap-4">
-            {settings.settings.autoSave && <span>Auto-save: ON</span>}
+            {settings.autoSave && <span>Auto-save: ON</span>}
             <span>Zoom: {zoom}%</span>
             <span>{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} mode</span>
           </div>
@@ -124,7 +129,7 @@ export default function AdvancedMarkdownEditor() {
         ref={refs.fileInputRef}
         type="file"
         accept=".md,.txt"
-        onChange={handlers.handleFileLoad}
+        onChange={handlers.handleFileInputChange}
         className="hidden"
       />
     </div>

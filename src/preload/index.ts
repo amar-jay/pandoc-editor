@@ -7,7 +7,10 @@ const api = {
   readFileByPath: (filePath: string) => ipcRenderer.invoke('read-file-by-path', filePath),
   saveFile: (filePath: string, content: string) =>
     ipcRenderer.invoke('save-file', filePath, content),
-  getFileTree: (dirPath?: string) => ipcRenderer.invoke('get-file-tree', dirPath)
+  getFileTree: (dirPath?: string) => ipcRenderer.invoke('get-file-tree', dirPath),
+  fetchMarkdownFile: (filePath: string) => ipcRenderer.invoke('fetch-markdown-file', filePath),
+  updateMarkdownFile: (filePath: string, content: string) =>
+    ipcRenderer.invoke('update-markdown-file', filePath, content)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
