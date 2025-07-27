@@ -1,13 +1,12 @@
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from './ui/dialog'
 import { Button } from './ui/button'
-import { Settings, X } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './ui/select'
 import { Label } from './ui/label'
 import { Switch } from './ui/switch'
-import { EditorSettings } from '@renderer/lib/types'
+import { EditorSettings } from '@/types'
 import { Slider } from './ui/slider'
-import { DialogClose } from '@radix-ui/react-dialog'
 
 interface SettingsDialogProps {
   settings: EditorSettings

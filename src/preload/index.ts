@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { AlertTypes } from '../main'
 
 // Custom APIs for renderer
 const api = {
@@ -10,7 +11,12 @@ const api = {
   getFileTree: (dirPath?: string) => ipcRenderer.invoke('get-file-tree', dirPath),
   fetchMarkdownFile: (filePath: string) => ipcRenderer.invoke('fetch-markdown-file', filePath),
   updateMarkdownFile: (filePath: string, content: string) =>
-    ipcRenderer.invoke('update-markdown-file', filePath, content)
+    ipcRenderer.invoke('update-markdown-file', filePath, content),
+  grayMatter: (content: string) => ipcRenderer.invoke('gray-matter', content),
+  reverseGrayMatter: (content: string, frontmatter: Record<string, unknown>) =>
+    ipcRenderer.invoke('reverse-gray-matter', content, frontmatter),
+  showAlert: (message: string, type: AlertTypes) => ipcRenderer.invoke('show-alert', message, type),
+  openFile: (filePath: string) => ipcRenderer.invoke('open-file', filePath)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

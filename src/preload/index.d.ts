@@ -1,5 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { TreeNode } from '@renderer/lib/types'
+import { TreeNode } from '@renderer/types'
 
 interface MarkdownFilesResult {
   success: boolean
@@ -31,6 +31,23 @@ declare global {
       fetchMarkdownFile: (
         filePath: string
       ) => Promise<{ success: boolean; content?: string; error?: string }>
+      grayMatter: (content: string) => Promise<{
+        success: boolean
+        data?: unknown
+        content?: string
+        error?: string
+      }>
+      reverseGrayMatter: (
+        content: string,
+        frontmatter: Record<string, unknown>
+      ) => Promise<{
+        success: boolean
+        content?: string
+        error?: string
+      }>
+
+      showAlert: (message: string, type: AlertTypes = 'info' as AlertTypes) => Promise<void>
+      openFile: (filePath: string) => Promise<{ success: boolean; error?: string }>
     }
   }
 }

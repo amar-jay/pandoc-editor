@@ -1,12 +1,34 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, dialog, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
+import { ensurePandocInstalled } from './install-pandoc'
+import { buildFileTree, findMarkdownFiles } from './filesystem'
+import {
+  convertWithPandoc,
+  convertToPDF,
+  convertToHTML,
+  convertToLaTeX,
+  convertToDOCX,
+  convertToEPUB,
+  quickConvert,
+  openConvertedFile,
+  getAvailablePDFEngines,
+  type PandocOptions
+} from './pandoc'
+import matter from 'gray-matter'
+import { getFilePath } from './utils'
 
-function createWindow(): void {
+export interface AlertTypes {
+  INFO: 'info'
+  WARNING: 'warning'
+  ERROR: 'error'
+}
+
+function createWindow(): BrowserWindow {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -17,7 +39,7 @@ function createWindow(): void {
     // transparent: true, // Enable transparency for rounded corners
     titleBarOverlay: {
       color: '#000',
-      height: 32,
+      height: 34,
       symbolColor: '#ccc'
     },
     titleBarStyle: 'hidden',
@@ -44,6 +66,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 // This method will be called when Electron has finished
@@ -82,17 +106,7 @@ app.whenReady().then(() => {
   // IPC handler to read a file by path
   ipcMain.handle('read-file-by-path', async (_, filePath: string) => {
     try {
-      const dirname = path.dirname(filePath)
-      if (
-        filePath.startsWith('/') ||
-        dirname === '.' ||
-        dirname === '' ||
-        dirname.startsWith('\\')
-      ) {
-        filePath = path.join(os.homedir(), '.pandoc-editor', filePath)
-      } else if (!filePath.endsWith('.md')) {
-        filePath += '.md'
-      }
+      filePath = await getFilePath(filePath)
       const content = await fs.promises.readFile(filePath, 'utf-8')
       const fileName = path.basename(filePath)
       return { success: true, content, fileName }
@@ -108,20 +122,7 @@ app.whenReady().then(() => {
   // IPC handler to save a file
   ipcMain.handle('save-file', async (_, filePath: string, content: string) => {
     try {
-      const dirname = path.dirname(filePath)
-      if (
-        filePath.startsWith('/') ||
-        dirname === '.' ||
-        dirname === '' ||
-        dirname.startsWith('\\')
-      ) {
-        filePath = path.join(os.homedir(), '.pandoc-editor', filePath)
-      } else if (!filePath.endsWith('.md')) {
-        filePath += '.md'
-      } else {
-        await fs.promises.mkdir(dirname, { recursive: true })
-      }
-      console.log('Saving file to:', dirname, filePath)
+      filePath = await getFilePath(filePath, true)
       // Ensure the directory exists
       await fs.promises.writeFile(filePath, content, 'utf-8')
       return { success: true }
@@ -133,6 +134,37 @@ app.whenReady().then(() => {
       }
     }
   })
+
+  // IPC handler for frontmatter handling
+  ipcMain.handle('gray-matter', async (_, content: string) => {
+    try {
+      const result = matter(content)
+      return { success: true, ...result }
+    } catch (error) {
+      console.error('Error processing frontmatter:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  // IPC to handle frontmatter parsing
+  ipcMain.handle(
+    'reverse-gray-matter',
+    async (_, content: string, frontmatter: Record<string, unknown>) => {
+      try {
+        const frontmatterContent = matter.stringify(content, frontmatter)
+        return { success: true, content: frontmatterContent }
+      } catch (error) {
+        console.error('Error reversing frontmatter:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
 
   // IPC handler to get file tree structure
   ipcMain.handle(
@@ -154,9 +186,7 @@ app.whenReady().then(() => {
   // IPC handler to update a markdown file
   ipcMain.handle('update-markdown-file', async (_, filePath: string, content: string) => {
     try {
-      const dir = path.dirname(filePath)
-      // Ensure the directory exists
-      await fs.promises.mkdir(dir, { recursive: true })
+      filePath = await getFilePath(filePath, true)
       await fs.promises.writeFile(filePath, content, 'utf-8')
       return { success: true }
     } catch (error) {
@@ -167,6 +197,186 @@ app.whenReady().then(() => {
       }
     }
   })
+
+  ipcMain.handle('show-alert', async (_, message: string, type = 'info') => {
+    const focusedWindow = BrowserWindow.getFocusedWindow()
+    if (!focusedWindow) {
+      console.error('No focused window to show alert')
+      return
+    }
+    dialog.showMessageBox(focusedWindow, {
+      type: type,
+      title: type.charAt(0).toUpperCase() + type.slice(1),
+      message: message,
+      buttons: ['OK']
+    })
+  })
+
+  // open a file
+  ipcMain.handle('open-file', async (_, filePath: string) => {
+    try {
+      filePath = await getFilePath(filePath)
+      if (fs.existsSync(filePath)) {
+        shell.openPath(filePath)
+        return { success: true }
+      } else {
+        return { success: false, error: 'File does not exist' }
+      }
+    } catch (error) {
+      console.error('Error opening file:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  // Pandoc conversion IPC handlers
+  ipcMain.handle(
+    'pandoc-convert',
+    async (_, inputPath: string, outputPath: string, options: PandocOptions) => {
+      try {
+        const result = await convertWithPandoc(inputPath, outputPath, options)
+        return result
+      } catch (error) {
+        console.error('Pandoc conversion error:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'pandoc-to-pdf',
+    async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
+      try {
+        const result = await convertToPDF(inputPath, outputPath, options)
+        return result
+      } catch (error) {
+        console.error('PDF conversion error:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'pandoc-to-html',
+    async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
+      try {
+        const result = await convertToHTML(inputPath, outputPath, options)
+        return result
+      } catch (error) {
+        console.error('HTML conversion error:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'pandoc-to-latex',
+    async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
+      try {
+        const result = await convertToLaTeX(inputPath, outputPath, options)
+        return result
+      } catch (error) {
+        console.error('LaTeX conversion error:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'pandoc-to-docx',
+    async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
+      try {
+        const result = await convertToDOCX(inputPath, outputPath, options)
+        return result
+      } catch (error) {
+        console.error('DOCX conversion error:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'pandoc-to-epub',
+    async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
+      try {
+        const result = await convertToEPUB(inputPath, outputPath, options)
+        return result
+      } catch (error) {
+        console.error('EPUB conversion error:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    'pandoc-quick-convert',
+    async (
+      _,
+      inputPath: string,
+      format: 'pdf' | 'html' | 'latex' | 'docx' | 'epub',
+      outputDir?: string
+    ) => {
+      try {
+        const result = await quickConvert(inputPath, format, outputDir)
+        return result
+      } catch (error) {
+        console.error('Quick conversion error:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error occurred'
+        }
+      }
+    }
+  )
+
+  ipcMain.handle('open-converted-file', async (_, filePath: string) => {
+    try {
+      await openConvertedFile(filePath)
+      return { success: true }
+    } catch (error) {
+      console.error('Error opening file:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  ipcMain.handle('get-available-pdf-engines', async () => {
+    try {
+      const engines = await getAvailablePDFEngines()
+      return { success: true, engines }
+    } catch (error) {
+      console.error('Error getting PDF engines:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  // Ensure Pandoc is installed
+  ensurePandocInstalled(app)
 
   // Create the main window
   createWindow()
@@ -186,90 +396,3 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
-// Function to recursively find all .md files
-async function findMarkdownFiles(
-  dirPath = path.join(os.homedir(), '.pandoc-editor')
-): Promise<string[]> {
-  const markdownFiles: string[] = []
-
-  try {
-    const items = await fs.promises.readdir(dirPath, { withFileTypes: true })
-
-    for (const item of items) {
-      const fullPath = path.join(dirPath, item.name)
-
-      if (item.isDirectory()) {
-        // Skip common directories that typically don't contain user markdown files
-        if (
-          !['node_modules', '.git', 'dist', 'build', '.next', '.nuxt', 'coverage'].includes(
-            item.name
-          )
-        ) {
-          const subFiles = await findMarkdownFiles(fullPath)
-          markdownFiles.push(...subFiles)
-        }
-      } else if (item.isFile() && path.extname(item.name).toLowerCase() === '.md') {
-        markdownFiles.push(fullPath)
-      }
-    }
-  } catch (error) {
-    console.error(`Error reading directory ${dirPath}:`, error)
-  }
-
-  return markdownFiles
-}
-
-// Interface for file tree structure
-interface FileTreeItem {
-  name: string
-  type: 'file' | 'folder'
-  path: string
-  children?: FileTreeItem[]
-}
-
-// Function to recursively build file tree structure
-async function buildFileTree(dirPath: string, basePath: string): Promise<FileTreeItem[]> {
-  const tree: FileTreeItem[] = []
-
-  try {
-    const items = await fs.promises.readdir(dirPath, { withFileTypes: true })
-
-    for (const item of items) {
-      const fullPath = path.join(dirPath, item.name)
-      const relativePath = path.relative(basePath, fullPath).replace(/\\/g, '/')
-
-      if (item.isDirectory()) {
-        // Skip certain directories
-        if (!['node_modules', '.git', '.vscode', 'coverage'].includes(item.name)) {
-          const children = await buildFileTree(fullPath, basePath)
-          tree.push({
-            name: item.name,
-            type: 'folder',
-            path: `/${relativePath}`,
-            children
-          })
-        }
-      } else if (item.isFile() && path.extname(item.name).toLowerCase() === '.md') {
-        tree.push({
-          name: item.name,
-          type: 'file',
-          path: `/${relativePath}`
-        })
-      }
-    }
-  } catch (error) {
-    console.error(`Error reading directory ${dirPath}:`, error)
-  }
-
-  // Sort to have folders first, then files, alphabetically
-  return tree.sort((a, b) => {
-    if (a.type !== b.type) {
-      return a.type === 'folder' ? -1 : 1
-    }
-    return a.name.localeCompare(b.name)
-  })
-}
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

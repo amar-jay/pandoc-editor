@@ -38,9 +38,10 @@ import { Card } from './ui/card'
 import { Badge } from './ui/badge'
 import { SettingsDialog } from './settings-dialog'
 // import { MarkdownFileBrowser } from './markdown-file-browser'
-import { EditorSettings, EditorStates, SearchHandlers } from '@renderer/lib/types'
+import type { EditorSettings, EditorStates, SearchHandlers } from '@/types'
 import type { useEditorHook } from './hooks/editor-hook'
 import SaveFileAsDialog from './filepath-dialog'
+import { pandocAPI } from '@renderer/lib/pandoc-api'
 
 interface ToolbarProps {
   search: SearchHandlers
@@ -294,39 +295,38 @@ export function Toolbar({
             <Download className="w-4 h-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Download className="w-5 h-5" />
               Export Document
             </DialogTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Choose your preferred export format below
+              Choose your preferred export format
             </p>
           </DialogHeader>
-          <div className="grid gap-3 mt-4 max-h-[60vh] overflow-y-auto">
-            {/* Available Formats */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Available Formats
-              </h4>
-              
+          <div className="mt-6">
+            {/* Export Format Grid */}
+            <div className="grid grid-cols-2 gap-3">
               {/* Markdown Export */}
               <Card
-                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group"
-                onClick={() => handlers.exportFile('md')}
+                className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={async () => {
+                  const e = await pandocAPI.openFile(states.currentFilePath)
+                  if (!e.success) {
+                    window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                  }
+                }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/20">
-                      <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium group-hover:text-foreground/90">Markdown</h4>
-                      <p className="text-sm text-muted-foreground">Original markdown format</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/20 flex-shrink-0">
+                    <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <Badge variant="secondary" className="text-xs">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium group-hover:text-foreground/90 text-sm">Markdown</h4>
+                    <p className="text-xs text-muted-foreground truncate">Original format</p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">
                     .md
                   </Badge>
                 </div>
@@ -334,112 +334,150 @@ export function Toolbar({
 
               {/* HTML Export */}
               <Card
-                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group"
-                onClick={() => handlers.exportFile('html')}
+                className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={async () => {
+                  const result = await pandocAPI.quickConvert(states.currentFilePath, 'html')
+                  if (result.success) {
+                    window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
+
+                    if (result.outputPath) {
+                      const e = await pandocAPI.openFile(result.outputPath)
+                      if (!e.success) {
+                        window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                      }
+                    }
+                  } else {
+                    window.api.showAlert(`Failed to export: ${result.error}`, 'error')
+                  }
+                }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-orange-100 dark:bg-orange-900/20">
-                      <Globe className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium group-hover:text-foreground/90">HTML</h4>
-                      <p className="text-sm text-muted-foreground">Web-ready HTML document</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-orange-100 dark:bg-orange-900/20 flex-shrink-0">
+                    <Globe className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                   </div>
-                  <Badge variant="secondary" className="text-xs">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium group-hover:text-foreground/90 text-sm">HTML</h4>
+                    <p className="text-xs text-muted-foreground truncate">Web document</p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">
                     .html
                   </Badge>
                 </div>
               </Card>
 
-              {/* Text Export */}
-              <Card
-                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group"
-                onClick={() => handlers.exportFile('txt')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-gray-100 dark:bg-gray-900/20">
-                      <FileType2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium group-hover:text-foreground/90">Plain Text</h4>
-                      <p className="text-sm text-muted-foreground">Simple text without formatting</p>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    .txt
-                  </Badge>
-                </div>
-              </Card>
-            </div>
-
-            {/* Coming Soon Formats */}
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Coming Soon
-              </h4>
-
               {/* PDF Export */}
               <Card
-                className="p-4 opacity-70 hover:opacity-90 transition-opacity cursor-pointer group"
-                onClick={() => alert('PDF export is not implemented yet')}
+                className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={async () => {
+                  const result = await pandocAPI.quickConvert(states.currentFilePath, 'pdf')
+                  if (result.success) {
+                    window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
+                    if (result.outputPath) {
+                      const e = await pandocAPI.openFile(result.outputPath)
+                      if (!e.success) {
+                        window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                      }
+                    }
+                  } else {
+                    window.api.showAlert(`Failed to export: ${result.error}`, 'error')
+                  }
+                }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-red-100 dark:bg-red-900/20">
-                      <FileType className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">PDF</h4>
-                      <p className="text-sm text-muted-foreground">Portable document format</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-red-100 dark:bg-red-900/20 flex-shrink-0">
+                    <FileType className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </div>
-                  <Badge variant="outline" className="text-xs">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium group-hover:text-foreground/90 text-sm">PDF</h4>
+                    <p className="text-xs text-muted-foreground truncate">Portable format</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs flex-shrink-0">
                     .pdf
-                  </Badge>
-                </div>
-              </Card>
-
-              {/* LaTeX Export */}
-              <Card
-                className="p-4 opacity-70 hover:opacity-90 transition-opacity cursor-pointer group"
-                onClick={() => alert('LaTeX export is not implemented yet')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-green-100 dark:bg-green-900/20">
-                      <Calculator className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">LaTeX</h4>
-                      <p className="text-sm text-muted-foreground">Scientific document format</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    .tex
                   </Badge>
                 </div>
               </Card>
 
               {/* Word Export */}
               <Card
-                className="p-4 opacity-70 hover:opacity-90 transition-opacity cursor-pointer group"
-                onClick={() => alert('Word export is not implemented yet')}
+                className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={async () => {
+                  const result = await pandocAPI.quickConvert(states.currentFilePath, 'docx')
+                  if (result.success) {
+                    window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
+                    if (result.outputPath) {
+                      const e = await pandocAPI.openFile(result.outputPath)
+                      if (!e.success) {
+                        window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                      }
+                    }
+                  } else {
+                    window.api.showAlert(`Failed to export: ${result.error}`, 'error')
+                  }
+                }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/20">
-                      <FileSpreadsheet className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <h4 className="font-medium">Word Document</h4>
-                      <p className="text-sm text-muted-foreground">Microsoft Word format</p>
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/20 flex-shrink-0">
+                    <FileSpreadsheet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <Badge variant="outline" className="text-xs">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium group-hover:text-foreground/90 text-sm">Word</h4>
+                    <p className="text-xs text-muted-foreground truncate">Microsoft format</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs flex-shrink-0">
                     .docx
+                  </Badge>
+                </div>
+              </Card>
+
+              {/* LaTeX Export */}
+              <Card
+                className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={async () => {
+                  const result = await pandocAPI.quickConvert(states.currentFilePath, 'latex')
+                  if (result.success) {
+                    window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
+                    if (result.outputPath) {
+                      const e = await pandocAPI.openFile(result.outputPath)
+                      if (!e.success) {
+                        window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                      }
+                    }
+                  } else {
+                    window.api.showAlert(`Failed to export: ${result.error}`, 'error')
+                  }
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-green-100 dark:bg-green-900/20 flex-shrink-0">
+                    <Calculator className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium group-hover:text-foreground/90 text-sm">LaTeX</h4>
+                    <p className="text-xs text-muted-foreground truncate">Scientific format</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                    .tex
+                  </Badge>
+                </div>
+              </Card>
+
+              {/* Text Export */}
+              <Card
+                className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={() => handlers.exportFile('txt')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-gray-100 dark:bg-gray-900/20 flex-shrink-0">
+                    <FileType2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium group-hover:text-foreground/90 text-sm">
+                      Plain Text
+                    </h4>
+                    <p className="text-xs text-muted-foreground truncate">No formatting</p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs flex-shrink-0">
+                    .txt
                   </Badge>
                 </div>
               </Card>

@@ -5,15 +5,13 @@
 @import './base.css';
 
 /* Import highlight.js theme for syntax highlighting */
-@import "./github.css";
+/* @import "./github.css"; */
 
 /* Import KaTeX CSS for math rendering */
 @import "katex/dist/katex.min.css";
 
-/* Dark mode syntax highlighting */
-@media (prefers-color-scheme: dark) {
-  @import "./github-dark.css";
-}
+@import "./github.css";
+@import "./github-dark.css";
 
 @custom-variant dark (&:is(.dark *));
 :root {

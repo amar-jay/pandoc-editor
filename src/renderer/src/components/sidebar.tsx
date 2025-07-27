@@ -17,7 +17,7 @@ import {
   SidebarRail
 } from '@/components/ui/sidebar'
 import { FileTree } from './file-tree'
-import { TreeNode } from '@renderer/lib/types'
+import type { TreeNode } from '@/types'
 import { useTheme } from './hooks/use-theme'
 
 function searchFileTree(tree: TreeNode[], query: string) {
@@ -50,7 +50,7 @@ export function AppSidebar({
         setFileTreeData(data.tree)
       })
       .catch((error) => {
-        alert('Error fetching file tree:' + error.message)
+        window.api.showAlert('Error fetching file tree:' + error.message, 'error')
       })
   }, [])
 
@@ -87,7 +87,7 @@ export function AppSidebar({
           </div>
         </div>
         <div className="relative group-data-[collapsible=icon]:hidden">
-          <Search className="absolute top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute top-2 h-4 w-4 ml-2 text-muted-foreground" />
           <SidebarInput
             placeholder="Search files..."
             value={searchQuery}

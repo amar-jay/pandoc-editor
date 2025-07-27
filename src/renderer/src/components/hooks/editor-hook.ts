@@ -1,4 +1,4 @@
-import {
+import type {
   EditorStates,
   EditorSettings,
   DocumentStats,
@@ -6,7 +6,7 @@ import {
   EditorHandlers,
   SearchHandlers,
   EditorRefs
-} from '@renderer/lib/types'
+} from '@/types'
 import { calculateStats } from '@renderer/lib/utils'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { defaultMarkdown } from '../default-markdown'
@@ -43,7 +43,7 @@ const saveToStorage = (key: string, value: unknown): void => {
 
 const showError = (message: string, error?: unknown): void => {
   console.error(message, error)
-  alert(message)
+  window.api.showAlert(message, 'error')
 }
 
 const confirmUnsavedChanges = (): boolean => {
@@ -591,6 +591,7 @@ export function useEditorHook(): EditorHookReturn {
 
       // Clean up all cursor positioning timeouts
       cursorTimeoutRefs.current.forEach((timeoutId) => clearTimeout(timeoutId))
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       cursorTimeoutRefs.current.clear()
     }
   }, [])
@@ -603,6 +604,7 @@ export function useEditorHook(): EditorHookReturn {
     isFullscreen,
     isModified,
     currentFileName,
+    currentFilePath: currentFilePath || '',
     copied,
     recentFiles,
     documentStats

@@ -17,9 +17,7 @@ function App(): React.JSX.Element {
           handleFileSelect={editorStates.handlers.loadFile}
         />
         <SidebarInset>
-          <WindowsTitlebar 
-						isZenMode={editorStates.states.isFullscreen}
-					/>
+          <WindowsTitlebar isZenMode={editorStates.states.isFullscreen} />
           <MarkdownEditor editorStates={editorStates} />
         </SidebarInset>
       </ThemeProvider>

@@ -7,7 +7,8 @@ import rehypeKatex from 'rehype-katex'
 import { MermaidRenderer } from './mermaid'
 import { Clock, Eye } from 'lucide-react'
 // import { ScrollArea } from './ui/scroll-area'
-import { EditorStates } from '@renderer/lib/types'
+import { EditorStates } from '@/types'
+import { useEffect, useState } from 'react'
 
 interface PreviewPaneProps {
   states: EditorStates
@@ -15,6 +16,37 @@ interface PreviewPaneProps {
   markdown: string
 }
 export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
+  // remove frontmatter
+  const [previewMarkdown, setPreviewMarkdown] = useState('')
+
+  useEffect(() => {
+    if (markdown && markdown.trim() !== '') {
+      const processMarkdown = async () => {
+        try {
+          // Use gray-matter to parse and remove frontmatter via IPC
+          const result = await window.api.grayMatter(markdown)
+          if (!result.success) {
+            throw new Error(result.error)
+          }
+          if (result.content) {
+            setPreviewMarkdown(result.content.trim())
+          } else {
+            setPreviewMarkdown(markdown)
+          }
+        } catch (error) {
+          // alert the error
+          console.error('Error processing markdown:', error)
+          window.api.showAlert((error as Error)?.message || 'Failed to process markdown', 'error')
+          setPreviewMarkdown(markdown)
+        }
+      }
+
+      processMarkdown()
+    } else {
+      setPreviewMarkdown('')
+    }
+  }, [markdown])
+
   return (
     <Card className="flex flex-col pt-0 scroll-auto overflow-auto scrollbar max-h-full">
       <div className="flex items-center justify-between p-3 border-b bg-muted/50">
@@ -28,20 +60,19 @@ export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
         </div>
       </div>
       <div
-        className="p-4 prose prose-sm max-w-none dark:prose-invert overflow-y-auto scrollbar"
+        className="p-4 prose max-w-none overflow-y-auto scrollbar"
         style={{ fontSize: `${zoom / 100}rem` }}
       >
         <ReactMarkdown
           remarkPlugins={[remarkGfm, remarkMath]}
           rehypePlugins={[rehypeHighlight, rehypeKatex]}
           components={{
-            code: ({ className, children, node, ...props }) => {
+            code: ({ className, children, ...props }) => {
               const match = /language-(\w+)/.exec(className || '')
               const language = match ? match[1] : ''
-              const inline = !(
-                (className && className.includes('language-')) ||
-                (node as any)?.parent?.tagName === 'pre'
-              )
+
+              // Simple fallback without node checking to avoid type issues
+              const inline = !(className && className.includes('language-'))
               if (!inline && language === 'mermaid') {
                 return <MermaidRenderer code={String(children).replace(/\n$/, '')} />
               }
@@ -124,7 +155,7 @@ export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
             )
           }}
         >
-          {markdown}
+          {previewMarkdown}
         </ReactMarkdown>
       </div>
     </Card>

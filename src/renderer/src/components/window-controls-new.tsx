@@ -7,13 +7,13 @@ export const WindowsTitlebar = ({ isZenMode }: { isZenMode: boolean }) => {
 
   // Check if window is maximized on mount
   useEffect(() => {
-    const checkMaximized = async () => {
-      if (window.electron?.ipcRenderer) {
-        const maximized = await window.electron.ipcRenderer.invoke('window-is-maximized')
-        setIsMaximized(maximized)
-      }
-    }
-    checkMaximized()
+    // const checkMaximized = async () => {
+    //   if (window.electron?.ipcRenderer) {
+    //     const maximized = await window.electron.ipcRenderer.invoke('window-is-maximized')
+    //     setIsMaximized(maximized)
+    //   }
+    // }
+    // checkMaximized()
 
     // Listen for window state changes
     if (window.electron?.ipcRenderer) {

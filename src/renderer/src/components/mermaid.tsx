@@ -11,7 +11,9 @@ export const MermaidRenderer = ({ code }: { code: string }) => {
   useEffect(() => {
     const renderMermaid = async () => {
       try {
-        const { svg } = await mermaid.render('mermaid-' + Math.random(), code)
+        // Generate a valid ID using timestamp and random number
+        const id = `mermaid-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        const { svg } = await mermaid.render(id, code)
         setSvg(svg)
       } catch (error) {
         console.error('Mermaid rendering error:', error)

@@ -1,3 +1,4 @@
+import type React from 'react' // does this load react or just types?
 export interface EditorStates {
   replaceTerm: string
   searchTerm: string
@@ -7,6 +8,7 @@ export interface EditorStates {
   isFullscreen: boolean
   isModified: boolean
   currentFileName: string
+  currentFilePath: string
   copied: boolean
   recentFiles: string[]
   documentStats: DocumentStats
@@ -94,4 +96,79 @@ export interface SearchHandlers {
 export interface EditorRefs {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
   fileInputRef: React.RefObject<HTMLInputElement | null>
+}
+
+export interface AlertTypes {
+  INFO: 'info'
+  WARNING: 'warning'
+  ERROR: 'error'
+}
+
+// Pandoc conversion types
+export interface PandocOptions {
+  // Output format options
+  outputFormat: 'pdf' | 'html' | 'latex' | 'docx' | 'epub' | 'odt' | 'rtf' | 'txt'
+
+  // PDF specific options
+  pdfEngine?:
+    | 'pdflatex'
+    | 'xelatex'
+    | 'lualatex'
+    | 'tectonic'
+    | 'wkhtmltopdf'
+    | 'weasyprint'
+    | 'pagedjs-cli'
+
+  // Bibliography options
+  bibliography?: string // Path to .bib file
+  csl?: string // Citation Style Language file
+
+  // Template and styling
+  template?: string
+  css?: string // For HTML output
+
+  // Font options
+  mainfont?: string
+  sansfont?: string
+  monofont?: string
+  mathfont?: string
+
+  // Document options
+  toc?: boolean // Table of contents
+  tocDepth?: number
+  numberSections?: boolean
+
+  // Metadata
+  title?: string
+  author?: string
+  date?: string
+
+  // Additional Pandoc options
+  standalone?: boolean
+  selfContained?: boolean // For HTML
+
+  // Custom variables
+  variables?: Record<string, string>
+
+  // Custom Pandoc arguments
+  customArgs?: string[]
+}
+
+export interface ConversionResult {
+  success: boolean
+  outputPath?: string
+  error?: string
+  command?: string
+}
+
+export interface PandocAPIResponse<T = unknown> {
+  success: boolean
+  error?: string
+  data?: T
+}
+
+export interface AvailableEnginesResponse {
+  success: boolean
+  engines?: string[]
+  error?: string
 }

@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Search, X } from 'lucide-react'
 import { useKeyboardShortcuts } from './hooks/editor-hook'
 import { PreviewPane } from './preview-pane'
-import { EditorPane } from './editor-pane2'
+import { EditorPane } from './editor-pane'
 import { Toolbar } from './toolbar'
-import { EditorHookReturn } from '@renderer/lib/types'
+import { EditorHookReturn } from '@/types'
 
 export default function AdvancedMarkdownEditor({
   editorStates
