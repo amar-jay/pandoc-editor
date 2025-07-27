@@ -14,7 +14,7 @@ function createWindow(): void {
     show: false,
     autoHideMenuBar: true,
     frame: false, // Remove the default frame for custom styling
-    transparent: true, // Enable transparency for rounded corners
+    // transparent: true, // Enable transparency for rounded corners
     titleBarOverlay: {
       color: '#000',
       height: 32,

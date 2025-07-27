@@ -313,6 +313,7 @@ export function Toolbar({
       <SettingsDialog
         settings={settings}
         updateSettings={handlers.updateSettings}
+        toggleSettingsDialog={handlers.toggleSettingsDialog}
         recentFiles={states.recentFiles}
       />
 

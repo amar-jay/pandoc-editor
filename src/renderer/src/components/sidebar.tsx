@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Folder, Search, Settings } from 'lucide-react'
+import { Folder, Moon, Search, Settings, Sun } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -18,16 +18,26 @@ import {
 } from '@/components/ui/sidebar'
 import { FileTree } from './file-tree'
 import { TreeNode } from '@renderer/lib/types'
-
-const navigationItems = [{ title: 'Settings', icon: Settings, url: '#' }]
+import { useTheme } from './hooks/use-theme'
 
 function searchFileTree(tree: TreeNode[], query: string) {
   return tree.filter((node) => node.name.toLowerCase().includes(query.toLowerCase()))
 }
-export function AppSidebar({ handleFileSelect }: { handleFileSelect: (path: string) => void }) {
+export function AppSidebar({
+  handleFileSelect,
+  toggleSettingsDialog
+}: {
+  toggleSettingsDialog: () => void
+  handleFileSelect: (path: string) => void
+}) {
   const [selectedFile, setSelectedFile] = React.useState<string>()
   const [searchQuery, setSearchQuery] = React.useState('')
   const [fileTreeData, setFileTreeData] = React.useState<TreeNode[]>([])
+  const themeProvider = useTheme()
+
+  const toggleTheme = () => {
+    themeProvider.setTheme(themeProvider.theme === 'light' ? 'dark' : 'light')
+  }
 
   React.useEffect(() => {
     const fileTree = window.api.getFileTree()
@@ -102,16 +112,32 @@ export function AppSidebar({ handleFileSelect }: { handleFileSelect: (path: stri
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url} className="font-medium">
-                      <item.icon className="h-4 w-4" />
-                      {item.title}
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem key={'Toggle Theme'}>
+                <SidebarMenuButton asChild>
+                  <button onClick={toggleTheme} className="font-medium">
+                    {themeProvider.theme === 'light' ? (
+                      <Sun className="h-4 w-4" />
+                    ) : (
+                      <Moon className="h-4 w-4" />
+                    )}
+                    Toggle Theme
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem key={'Settings'}>
+                <SidebarMenuButton asChild>
+                  <button
+                    onClick={() => {
+                      console.log('Toggle settings dialog')
+                      toggleSettingsDialog()
+                    }}
+                    className="font-medium"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -6,7 +6,7 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeKatex from 'rehype-katex'
 import { MermaidRenderer } from './mermaid'
 import { Clock, Eye } from 'lucide-react'
-import { ScrollArea } from './ui/scroll-area'
+// import { ScrollArea } from './ui/scroll-area'
 import { EditorStates } from '@renderer/lib/types'
 
 interface PreviewPaneProps {
