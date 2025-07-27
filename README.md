@@ -4,6 +4,6 @@ Pandoc Editor is just another cross-platform Markdown editor specifically built 
 We plan to implement pandoc support for direct export to PDF. 
 
 ## TODO:
-- [ ] Implement pandoc support for direct export to PDF.
-- [ ] Implement Mermaid diagrams support.
+- [x] Implement pandoc support for direct export to PDF.
+- [x] Implement Mermaid diagrams support.
 - [ ] Cross-platform support for Windows, Mac and Linux.
