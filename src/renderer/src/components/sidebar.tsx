@@ -1,7 +1,6 @@
 'use client'
 
 import * as React from 'react'
-import { cn } from '@/lib/utils'
 import { Folder, Moon, Search, Settings, Sun } from 'lucide-react'
 import {
   Sidebar,
@@ -77,7 +76,7 @@ export function AppSidebar({
 
   return (
     <Sidebar variant="sidebar" className="border-r" collapsible="icon">
-      <SidebarHeader className="gap-3.5 border-b p-4">
+      <SidebarHeader className="gap-3.5 border-b px-[6px] py-2">
         <div className="flex items-center gap-2">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Folder className="size-4" />
@@ -144,7 +143,7 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
           Session not setup. No authentication for now
         </div>
       </SidebarFooter>

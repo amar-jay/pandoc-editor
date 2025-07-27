@@ -24,12 +24,18 @@ import {
   SplitSquareHorizontal,
   Undo,
   Redo,
-  FileDown,
-  Search
+  Search,
+  Globe,
+  FileType2,
+  FileType,
+  Calculator,
+  FileSpreadsheet
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Separator } from './ui/separator'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
+import { Card } from './ui/card'
+import { Badge } from './ui/badge'
 import { SettingsDialog } from './settings-dialog'
 // import { MarkdownFileBrowser } from './markdown-file-browser'
 import { EditorSettings, EditorStates, SearchHandlers } from '@renderer/lib/types'
@@ -288,23 +294,156 @@ export function Toolbar({
             <Download className="w-4 h-4" />
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Export Document</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="w-5 h-5" />
+              Export Document
+            </DialogTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Choose your preferred export format below
+            </p>
           </DialogHeader>
-          <div className="grid gap-4">
-            <Button onClick={() => handlers.exportFile('md')} className="justify-start">
-              <FileText className="w-4 h-4 mr-2" />
-              Export as Markdown (.md)
-            </Button>
-            <Button onClick={() => handlers.exportFile('html')} className="justify-start">
-              <FileDown className="w-4 h-4 mr-2" />
-              Export as HTML (.html)
-            </Button>
-            <Button onClick={() => handlers.exportFile('txt')} className="justify-start">
-              <FileText className="w-4 h-4 mr-2" />
-              Export as Text (.txt)
-            </Button>
+          <div className="grid gap-3 mt-4 max-h-[60vh] overflow-y-auto">
+            {/* Available Formats */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Available Formats
+              </h4>
+              
+              {/* Markdown Export */}
+              <Card
+                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={() => handlers.exportFile('md')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/20">
+                      <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium group-hover:text-foreground/90">Markdown</h4>
+                      <p className="text-sm text-muted-foreground">Original markdown format</p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    .md
+                  </Badge>
+                </div>
+              </Card>
+
+              {/* HTML Export */}
+              <Card
+                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={() => handlers.exportFile('html')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-md bg-orange-100 dark:bg-orange-900/20">
+                      <Globe className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium group-hover:text-foreground/90">HTML</h4>
+                      <p className="text-sm text-muted-foreground">Web-ready HTML document</p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    .html
+                  </Badge>
+                </div>
+              </Card>
+
+              {/* Text Export */}
+              <Card
+                className="p-4 hover:bg-accent/50 transition-colors cursor-pointer group"
+                onClick={() => handlers.exportFile('txt')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-md bg-gray-100 dark:bg-gray-900/20">
+                      <FileType2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium group-hover:text-foreground/90">Plain Text</h4>
+                      <p className="text-sm text-muted-foreground">Simple text without formatting</p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">
+                    .txt
+                  </Badge>
+                </div>
+              </Card>
+            </div>
+
+            {/* Coming Soon Formats */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Coming Soon
+              </h4>
+
+              {/* PDF Export */}
+              <Card
+                className="p-4 opacity-70 hover:opacity-90 transition-opacity cursor-pointer group"
+                onClick={() => alert('PDF export is not implemented yet')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-md bg-red-100 dark:bg-red-900/20">
+                      <FileType className="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">PDF</h4>
+                      <p className="text-sm text-muted-foreground">Portable document format</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    .pdf
+                  </Badge>
+                </div>
+              </Card>
+
+              {/* LaTeX Export */}
+              <Card
+                className="p-4 opacity-70 hover:opacity-90 transition-opacity cursor-pointer group"
+                onClick={() => alert('LaTeX export is not implemented yet')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-md bg-green-100 dark:bg-green-900/20">
+                      <Calculator className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">LaTeX</h4>
+                      <p className="text-sm text-muted-foreground">Scientific document format</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    .tex
+                  </Badge>
+                </div>
+              </Card>
+
+              {/* Word Export */}
+              <Card
+                className="p-4 opacity-70 hover:opacity-90 transition-opacity cursor-pointer group"
+                onClick={() => alert('Word export is not implemented yet')}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/20">
+                      <FileSpreadsheet className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium">Word Document</h4>
+                      <p className="text-sm text-muted-foreground">Microsoft Word format</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    .docx
+                  </Badge>
+                </div>
+              </Card>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
