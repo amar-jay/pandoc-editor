@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { cn } from '@/lib/utils'
 import { Folder, Moon, Search, Settings, Sun } from 'lucide-react'
 import {
   Sidebar,
@@ -75,29 +76,29 @@ export function AppSidebar({
   }
 
   return (
-    <Sidebar variant="sidebar" className="border-r">
+    <Sidebar variant="sidebar" className="border-r" collapsible="icon">
       <SidebarHeader className="gap-3.5 border-b p-4">
         <div className="flex items-center gap-2">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Folder className="size-4" />
           </div>
-          <div className="grid flex-1 text-left text-sm leading-tight">
+          <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
             <span className="truncate font-semibold">Pandoc Editor</span>
             <span className="truncate text-xs text-muted-foreground">v1.0.0</span>
           </div>
         </div>
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="relative group-data-[collapsible=icon]:hidden">
+          <Search className="absolute top-2.5 h-4 w-4 text-muted-foreground" />
           <SidebarInput
             placeholder="Search files..."
             value={searchQuery}
             onChange={(e) => handleFileSearch(e.target.value)}
-            className="pl-8"
+            className={'pl-8'}
           />
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="scrollbar">
         <SidebarGroup>
           <SidebarGroupLabel>Explorer</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -113,29 +114,28 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem key={'Toggle Theme'}>
-                <SidebarMenuButton asChild>
-                  <button onClick={toggleTheme} className="font-medium">
-                    {themeProvider.theme === 'light' ? (
-                      <Sun className="h-4 w-4" />
-                    ) : (
-                      <Moon className="h-4 w-4" />
-                    )}
-                    Toggle Theme
-                  </button>
+                <SidebarMenuButton
+                  onClick={toggleTheme}
+                  tooltip={`Switch to ${themeProvider.theme === 'light' ? 'dark' : 'light'} theme`}
+                >
+                  {themeProvider.theme === 'light' ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                  <span>Toggle Theme</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem key={'Settings'}>
-                <SidebarMenuButton asChild>
-                  <button
-                    onClick={() => {
-                      console.log('Toggle settings dialog')
-                      toggleSettingsDialog()
-                    }}
-                    className="font-medium"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </button>
+                <SidebarMenuButton
+                  onClick={() => {
+                    console.log('Toggle settings dialog')
+                    toggleSettingsDialog()
+                  }}
+                  tooltip="Open Settings"
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

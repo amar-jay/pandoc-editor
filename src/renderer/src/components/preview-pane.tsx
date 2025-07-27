@@ -16,7 +16,7 @@ interface PreviewPaneProps {
 }
 export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
   return (
-    <Card className="flex flex-col pt-0 scroll-auto overflow-auto max-h-full">
+    <Card className="flex flex-col pt-0 scroll-auto overflow-auto scrollbar max-h-full">
       <div className="flex items-center justify-between p-3 border-b bg-muted/50">
         <div className="flex items-center gap-2">
           <Eye className="w-4 h-4" />
@@ -28,7 +28,7 @@ export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
         </div>
       </div>
       <div
-        className="p-4 prose prose-sm max-w-none dark:prose-invert overflow-y-auto"
+        className="p-4 prose prose-sm max-w-none dark:prose-invert overflow-y-auto scrollbar"
         style={{ fontSize: `${zoom / 100}rem` }}
       >
         <ReactMarkdown

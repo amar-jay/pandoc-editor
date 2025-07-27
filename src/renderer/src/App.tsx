@@ -1,6 +1,6 @@
 import { ThemeProvider } from './components/theme-provider'
 import MarkdownEditor from './components/editor-v3'
-import { WindowsTitlebar } from './components/window-controls'
+import { WindowsTitlebar } from './components/window-controls-new'
 import { AppSidebar } from './components/sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useEditorHook } from './components/hooks/editor-hook'
@@ -17,7 +17,9 @@ function App(): React.JSX.Element {
           handleFileSelect={editorStates.handlers.loadFile}
         />
         <SidebarInset>
-          <WindowsTitlebar />
+          <WindowsTitlebar 
+						isZenMode={editorStates.states.isFullscreen}
+					/>
           <MarkdownEditor editorStates={editorStates} />
         </SidebarInset>
       </ThemeProvider>

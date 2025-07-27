@@ -352,7 +352,7 @@ export function EditorPane({
   const cursorStyles = getCursorStyles()
 
   return (
-    <Card className="flex flex-col pt-0 scroll-auto overflow-auto max-h-full">
+    <Card className="flex flex-col pt-0 scroll-auto scrollbar overflow-auto max-h-full">
       <style>{`
         .editor-textarea {
           caret-shape: ${settings.cursorStyle === 'block' ? 'block' : 'auto'};

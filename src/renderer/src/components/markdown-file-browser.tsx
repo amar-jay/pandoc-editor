@@ -121,7 +121,7 @@ export function MarkdownFileBrowser({ onFileSelect }: MarkdownFileBrowserProps) 
           )}
 
           {/* Files List */}
-          <div className="max-h-96 overflow-y-auto border rounded-md">
+          <div className="max-h-96 overflow-y-auto scrollbar border rounded-md">
             {filteredFiles.length > 0 ? (
               <div className="space-y-1 p-2">
                 {filteredFiles.map((file, index) => (

@@ -296,7 +296,7 @@ export function EditorPane({
   const lineHeight = settings.lineHeight
 
   return (
-    <Card className="flex flex-col pt-0 scroll-auto overflow-auto max-h-full">
+    <Card className="flex flex-col pt-0 overflow-auto max-h-full">
       <div className="flex items-center justify-between p-3 border-b bg-muted/50">
         <div className="flex items-center gap-2">
           <Edit3 className="w-4 h-4" />
@@ -358,7 +358,7 @@ export function EditorPane({
               ref={textareaRef}
               value={markdown}
               onChange={handleTextChange}
-              className="w-full h-full p-4 resize-none border-0 outline-none bg-transparent font-mono leading-relaxed"
+              className="w-full h-full p-4 resize-none border-0 outline-none bg-transparent font-mono leading-relaxed scrollbar"
               placeholder="Start typing your markdown here..."
               spellCheck={settings.spellCheck}
               style={{

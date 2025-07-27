@@ -61,6 +61,7 @@ function FileTreeItem({ item, onFileSelect, selectedFile, level = 0 }: FileTreeI
             isSelected && 'bg-accent text-accent-foreground font-medium'
           )}
           style={{ paddingLeft: `${(level + 1) * 12 + 8}px` }}
+          tooltip={item.name}
         >
           <File className="h-4 w-4 shrink-0" />
           <span className="truncate">{item.name}</span>
@@ -76,6 +77,7 @@ function FileTreeItem({ item, onFileSelect, selectedFile, level = 0 }: FileTreeI
           <SidebarMenuButton
             className="h-7 text-sm font-normal"
             style={{ paddingLeft: `${level * 12 + 8}px` }}
+            tooltip={item.name}
           >
             <ChevronRight
               className={cn('h-4 w-4 shrink-0 transition-transform', isOpen && 'rotate-90')}
