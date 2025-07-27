@@ -1,21 +1,28 @@
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from './ui/dialog'
 import { Button } from './ui/button'
-import { Settings } from 'lucide-react'
+import { Settings, X } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs'
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './ui/select'
 import { Label } from './ui/label'
 import { Switch } from './ui/switch'
 import { EditorSettings } from '@renderer/lib/types'
 import { Slider } from './ui/slider'
+import { DialogClose } from '@radix-ui/react-dialog'
 
 interface SettingsDialogProps {
   settings: EditorSettings
   recentFiles: string[]
   updateSettings: (settings: Partial<EditorSettings>) => void
+  toggleSettingsDialog: () => void
 }
-export function SettingsDialog({ settings, recentFiles, updateSettings }: SettingsDialogProps) {
+export function SettingsDialog({
+  settings,
+  recentFiles,
+  updateSettings,
+  toggleSettingsDialog
+}: SettingsDialogProps) {
   return (
-    <Dialog>
+    <Dialog open={settings.settingsDialog} onOpenChange={toggleSettingsDialog}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" title="Settings">
           <Settings className="w-4 h-4" />

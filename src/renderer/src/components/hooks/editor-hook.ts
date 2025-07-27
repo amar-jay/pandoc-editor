@@ -10,7 +10,6 @@ import {
 import { calculateStats } from '@renderer/lib/utils'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { defaultMarkdown } from '../default-markdown'
-import { string } from 'zod'
 
 // Constants
 const STORAGE_KEYS = {
@@ -82,7 +81,8 @@ export function useEditorHook(): EditorHookReturn {
       wordWrap: true,
       autoSave: true,
       spellCheck: false,
-      vim: false
+      vim: false,
+      settingsDialog: false
     })
   )
 
@@ -623,7 +623,10 @@ export function useEditorHook(): EditorHookReturn {
     redo,
     copyToClipboard,
     toggleFullscreen,
-    updateSettings
+    updateSettings,
+    toggleSettingsDialog: () => {
+      setSettings((prev) => ({ ...prev, settingsDialog: !prev.settingsDialog }))
+    }
   }
 
   const searchHandlers: SearchHandlers = {

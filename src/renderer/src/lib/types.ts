@@ -23,6 +23,8 @@ export interface EditorSettings {
   spellCheck: boolean
   vim: boolean
   cursorStyle?: 'default' | 'thick' | 'block' | 'underline'
+  // for managing settings dialog state
+  settingsDialog: boolean
 }
 
 export interface DocumentStats {
@@ -76,6 +78,7 @@ export interface EditorHandlers {
   copyToClipboard: () => Promise<void>
   toggleFullscreen: () => void
   updateSettings: (settings: Partial<EditorSettings>) => void
+  toggleSettingsDialog: () => void
 }
 
 export interface SearchHandlers {
