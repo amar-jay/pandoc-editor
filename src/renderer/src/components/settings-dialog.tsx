@@ -9,13 +9,11 @@ import { EditorSettings } from '@renderer/lib/types'
 import { Slider } from './ui/slider'
 
 interface SettingsDialogProps {
-  settings: {
-    settings: EditorSettings
-    setSettings: React.Dispatch<React.SetStateAction<EditorSettings>>
-  }
+  settings: EditorSettings
   recentFiles: string[]
+  updateSettings: (settings: Partial<EditorSettings>) => void
 }
-export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
+export function SettingsDialog({ settings, recentFiles, updateSettings }: SettingsDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -38,9 +36,9 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
             <div className="space-y-2">
               <Label>Theme</Label>
               <Select
-                value={settings.settings.theme}
+                value={settings.theme}
                 onValueChange={(value: 'auto' | 'light' | 'dark') =>
-                  settings.setSettings({ ...settings.settings, theme: value })
+                  updateSettings({ theme: value })
                 }
               >
                 <SelectTrigger>
@@ -55,12 +53,10 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Font Size: {settings.settings.fontSize}px</Label>
+              <Label>Font Size: {settings.fontSize}px</Label>
               <Slider
-                value={[settings.settings.fontSize]}
-                onValueChange={([value]) =>
-                  settings.setSettings({ ...settings.settings, fontSize: value })
-                }
+                value={[settings.fontSize]}
+                onValueChange={([value]) => updateSettings({ fontSize: value })}
                 min={10}
                 max={24}
                 step={1}
@@ -70,10 +66,8 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
             <div className="space-y-2">
               <Label>Font Family</Label>
               <Select
-                value={settings.settings.fontFamily}
-                onValueChange={(value) =>
-                  settings.setSettings({ ...settings.settings, fontFamily: value })
-                }
+                value={settings.fontFamily}
+                onValueChange={(value) => updateSettings({ fontFamily: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -88,15 +82,13 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label>Line Height: {settings.settings.lineHeight}</Label>
+              <Label>Line Height: {settings.lineHeight}</Label>
               <Slider
-                value={[settings.settings.lineHeight]}
+                value={[settings.lineHeight]}
                 min={1}
                 max={2}
                 step={0.1}
-                onValueChange={([value]) =>
-                  settings.setSettings({ ...settings.settings, lineHeight: value })
-                }
+                onValueChange={([value]) => updateSettings({ lineHeight: value })}
               />
             </div>
           </TabsContent>
@@ -105,40 +97,32 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
             <div className="flex items-center justify-between">
               <Label>Show Line Numbers</Label>
               <Switch
-                checked={settings.settings.showLineNumbers}
-                onCheckedChange={(checked) =>
-                  settings.setSettings({ ...settings.settings, showLineNumbers: checked })
-                }
+                checked={settings.showLineNumbers}
+                onCheckedChange={(checked) => updateSettings({ showLineNumbers: checked })}
               />
             </div>
 
             <div className="flex items-center justify-between">
               <Label>Word Wrap</Label>
               <Switch
-                checked={settings.settings.wordWrap}
-                onCheckedChange={(checked) =>
-                  settings.setSettings({ ...settings.settings, wordWrap: checked })
-                }
+                checked={settings.wordWrap}
+                onCheckedChange={(checked) => updateSettings({ wordWrap: checked })}
               />
             </div>
 
             <div className="flex items-center justify-between">
               <Label>Auto Save</Label>
               <Switch
-                checked={settings.settings.autoSave}
-                onCheckedChange={(checked) =>
-                  settings.setSettings({ ...settings.settings, autoSave: checked })
-                }
+                checked={settings.autoSave}
+                onCheckedChange={(checked) => updateSettings({ autoSave: checked })}
               />
             </div>
 
             <div className="flex items-center justify-between">
               <Label>Spell Check</Label>
               <Switch
-                checked={settings.settings.spellCheck}
-                onCheckedChange={(checked) =>
-                  settings.setSettings({ ...settings.settings, spellCheck: checked })
-                }
+                checked={settings.spellCheck}
+                onCheckedChange={(checked) => updateSettings({ spellCheck: checked })}
               />
             </div>
           </TabsContent>
@@ -147,14 +131,12 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
             <div className="flex items-center justify-between">
               <Label>Vim Key Bindings</Label>
               <Switch
-                checked={settings.settings.vim}
-                onCheckedChange={(checked) =>
-                  settings.setSettings({ ...settings.settings, vim: checked })
-                }
+                checked={settings.vim}
+                onCheckedChange={(checked) => updateSettings({ vim: checked })}
               />
             </div>
 
-            {settings.settings.vim && (
+            {settings.vim && (
               <>
                 <span className="text-xs font-semibold text-accent-foreground/50 p-0 mt-0">
                   Vim Settings
@@ -162,10 +144,9 @@ export function SettingsDialog({ settings, recentFiles }: SettingsDialogProps) {
                 <div className="flex items-center justify-between">
                   <Label>Cursor</Label>
                   <Select
-                    value={settings.settings.cursorStyle ? settings.settings.cursorStyle : 'block'}
+                    value={settings.cursorStyle ? settings.cursorStyle : 'block'}
                     onValueChange={(value: string) =>
-                      settings.setSettings({
-                        ...settings.settings,
+                      updateSettings({
                         cursorStyle: value as EditorSettings['cursorStyle']
                       })
                     }

@@ -24,6 +24,13 @@ declare global {
       getFileTree: (
         dirPath?: string
       ) => Promise<{ success: boolean; tree?: TreeNode[]; error?: string }>
+      updateMarkdownFile: (
+        filePath: string,
+        content: string
+      ) => Promise<{ success: boolean; error?: string }>
+      fetchMarkdownFile: (
+        filePath: string
+      ) => Promise<{ success: boolean; content?: string; error?: string }>
     }
   }
 }

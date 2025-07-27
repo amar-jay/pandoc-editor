@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Search, Settings, Terminal, Zap } from 'lucide-react'
+import { Folder, Search, Settings } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -19,67 +19,12 @@ import {
 import { FileTree } from './file-tree'
 import { TreeNode } from '@renderer/lib/types'
 
-// // Sample file tree data
-// const fileTreeData = [
-//   {
-//     name: 'src',
-//     type: 'folder' as const,
-//     path: '/src',
-//     children: [
-//       {
-//         name: 'components',
-//         type: 'folder' as const,
-//         path: '/src/components',
-//         children: [
-//           { name: 'App.tsx', type: 'file' as const, path: '/src/components/App.tsx' },
-//           { name: 'Header.tsx', type: 'file' as const, path: '/src/components/Header.tsx' },
-//           { name: 'Sidebar.tsx', type: 'file' as const, path: '/src/components/Sidebar.tsx' }
-//         ]
-//       },
-//       {
-//         name: 'utils',
-//         type: 'folder' as const,
-//         path: '/src/utils',
-//         children: [
-//           { name: 'helpers.ts', type: 'file' as const, path: '/src/utils/helpers.ts' },
-//           { name: 'constants.ts', type: 'file' as const, path: '/src/utils/constants.ts' }
-//         ]
-//       },
-//       { name: 'main.ts', type: 'file' as const, path: '/src/main.ts' },
-//       { name: 'preload.ts', type: 'file' as const, path: '/src/preload.ts' },
-//       { name: 'renderer.ts', type: 'file' as const, path: '/src/renderer.ts' }
-//     ]
-//   },
-//   {
-//     name: 'public',
-//     type: 'folder' as const,
-//     path: '/public',
-//     children: [
-//       { name: 'index.html', type: 'file' as const, path: '/public/index.html' },
-//       { name: 'icon.png', type: 'file' as const, path: '/public/icon.png' }
-//     ]
-//   },
-//   {
-//     name: 'dist',
-//     type: 'folder' as const,
-//     path: '/dist',
-//     children: [
-//       { name: 'main.js', type: 'file' as const, path: '/dist/main.js' },
-//       { name: 'renderer.js', type: 'file' as const, path: '/dist/renderer.js' }
-//     ]
-//   },
-//   { name: 'package.json', type: 'file' as const, path: '/package.json' },
-//   { name: 'tsconfig.json', type: 'file' as const, path: '/tsconfig.json' },
-//   { name: 'electron-builder.json', type: 'file' as const, path: '/electron-builder.json' },
-//   { name: 'README.md', type: 'file' as const, path: '/README.md' }
-// ]
+const navigationItems = [{ title: 'Settings', icon: Settings, url: '#' }]
 
-const navigationItems = [
-  { title: 'Terminal', icon: Terminal, url: '#' },
-  { title: 'Settings', icon: Settings, url: '#' }
-]
-
-export function AppSidebar() {
+function searchFileTree(tree: TreeNode[], query: string) {
+  return tree.filter((node) => node.name.toLowerCase().includes(query.toLowerCase()))
+}
+export function AppSidebar({ handleFileSelect }: { handleFileSelect: (path: string) => void }) {
   const [selectedFile, setSelectedFile] = React.useState<string>()
   const [searchQuery, setSearchQuery] = React.useState('')
   const [fileTreeData, setFileTreeData] = React.useState<TreeNode[]>([])
@@ -99,21 +44,35 @@ export function AppSidebar() {
       })
   }, [])
 
-  const handleFileSelect = (path: string) => {
+  const _handleFileSelect = (path: string) => {
     setSelectedFile(path)
+    handleFileSelect(path)
     // In a real Electron app, you would emit an IPC event here
     console.log('Selected file:', path)
   }
+  const handleFileSearch = (query: string) => {
+    setSearchQuery(query)
+    if (query.trim() !== '') {
+      setFileTreeData(searchFileTree(fileTreeData, query.trim()))
+    } else {
+      // Reset to original file tree if search query is empty
+      window.api.getFileTree().then((data) => {
+        if (data.tree) {
+          setFileTreeData(data.tree)
+        }
+      })
+    }
+  }
 
   return (
-    <Sidebar variant="inset" className="border-r">
+    <Sidebar variant="sidebar" className="border-r">
       <SidebarHeader className="gap-3.5 border-b p-4">
         <div className="flex items-center gap-2">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Zap className="size-4" />
+            <Folder className="size-4" />
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">Electron App</span>
+            <span className="truncate font-semibold">Pandoc Editor</span>
             <span className="truncate text-xs text-muted-foreground">v1.0.0</span>
           </div>
         </div>
@@ -122,7 +81,7 @@ export function AppSidebar() {
           <SidebarInput
             placeholder="Search files..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleFileSearch(e.target.value)}
             className="pl-8"
           />
         </div>
@@ -134,7 +93,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <FileTree
               data={fileTreeData}
-              onFileSelect={handleFileSelect}
+              onFileSelect={_handleFileSelect}
               selectedFile={selectedFile}
             />
           </SidebarGroupContent>
@@ -159,7 +118,9 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
-        <div className="text-xs text-muted-foreground">Ready • No issues found</div>
+        <div className="text-xs text-muted-foreground">
+          Session not setup. No authentication for now
+        </div>
       </SidebarFooter>
 
       <SidebarRail />

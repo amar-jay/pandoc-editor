@@ -95,7 +95,13 @@ app.whenReady().then(() => {
   // IPC handler to save a file
   ipcMain.handle('save-file', async (_, filePath: string, content: string) => {
     try {
-      const dir = path.dirname(filePath)
+      let dir = path.dirname(filePath)
+      if (dir == '.' || dir == '') {
+        dir = os.homedir() + '/.pandoc-editor'
+      }
+      if (!filePath.endsWith('.md')) {
+        filePath += '.md'
+      }
       // Ensure the directory exists
       await fs.promises.mkdir(dir, { recursive: true })
       await fs.promises.writeFile(filePath, content, 'utf-8')
@@ -126,6 +132,24 @@ app.whenReady().then(() => {
     }
   )
 
+  // IPC handler to update a markdown file
+  ipcMain.handle('update-markdown-file', async (_, filePath: string, content: string) => {
+    try {
+      const dir = path.dirname(filePath)
+      // Ensure the directory exists
+      await fs.promises.mkdir(dir, { recursive: true })
+      await fs.promises.writeFile(filePath, content, 'utf-8')
+      return { success: true }
+    } catch (error) {
+      console.error('Error saving file:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  // Create the main window
   createWindow()
 
   app.on('activate', function () {
