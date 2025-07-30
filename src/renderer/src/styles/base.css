@@ -46,7 +46,7 @@ ul {
 }
 
 body {
-	max-height: 100vh;
+  max-height: 100vh;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
