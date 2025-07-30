@@ -11,16 +11,34 @@ export function useKeyboardShortcuts(
     | 'undo'
     | 'redo'
     | 'toggleFullscreen'
+    | 'toggleSaveFileAsDialog'
+    | 'zoomIn'
+    | 'zoomOut'
   >,
-  toggleSearch: () => void
+  toggleSearch: () => void,
+  toggleShortcuts: () => void
 ) {
-  const { saveFile, openFile, createNewFile, insertMarkdown, undo, redo, toggleFullscreen } =
-    handlers
+  const {
+    saveFile,
+    openFile,
+    createNewFile,
+    insertMarkdown,
+    undo,
+    redo,
+    toggleFullscreen,
+    toggleSaveFileAsDialog,
+    zoomIn,
+    zoomOut
+  } = handlers
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
         switch (e.key) {
+          case 'S': // Handle Ctrl+Shift+S (Save As)
+            e.preventDefault()
+            toggleSaveFileAsDialog()
+            break
           case 's':
             e.preventDefault()
             saveFile()
@@ -36,6 +54,19 @@ export function useKeyboardShortcuts(
           case 'f':
             e.preventDefault()
             toggleSearch()
+            break
+          case '/':
+            e.preventDefault()
+            toggleShortcuts()
+            break
+          case '=':
+          case '+':
+            e.preventDefault()
+            zoomIn()
+            break
+          case '-':
+            e.preventDefault()
+            zoomOut()
             break
           case 'z':
             if (e.shiftKey) {
@@ -69,9 +100,13 @@ export function useKeyboardShortcuts(
     openFile,
     createNewFile,
     toggleSearch,
+    toggleShortcuts,
+    toggleSaveFileAsDialog,
     insertMarkdown,
     redo,
     undo,
-    toggleFullscreen
+    toggleFullscreen,
+    zoomIn,
+    zoomOut
   ])
 }

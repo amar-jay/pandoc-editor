@@ -41,6 +41,8 @@ export function useEditorHook(): EditorHookReturn {
   const [currentFileName, setCurrentFileName] = useState('')
   const [isModified, setIsModified] = useState(false)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [zoom, setZoom] = useState(100)
+  const [isSaveFileAsDialogOpen, setIsSaveFileAsDialogOpen] = useState(false)
 
   // UI state
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -54,6 +56,17 @@ export function useEditorHook(): EditorHookReturn {
   // Undo/Redo state
   const [undoStack, setUndoStack] = useState<string[]>([])
   const [redoStack, setRedoStack] = useState<string[]>([])
+
+  // zoom events
+  const zoomIn = () => {
+    setZoom(Math.min(200, zoom + 10)) // Max zoom at 200%
+  }
+  const zoomOut = () => {
+    setZoom(Math.max(50, zoom - 10)) // Min zoom at 50%
+  }
+  const resetZoom = () => {
+    setZoom(100) // Reset to 100%
+  }
 
   // Settings and stats
   const [settings, setSettings] = useState<EditorSettings>(() =>
@@ -531,6 +544,9 @@ export function useEditorHook(): EditorHookReturn {
     }
   }, [markdown])
 
+  const toggleSaveFileAsDialog = useCallback(() => {
+    setIsSaveFileAsDialogOpen((prev) => !prev)
+  }, [])
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((prev) => !prev)
   }, [])
@@ -567,6 +583,7 @@ export function useEditorHook(): EditorHookReturn {
   }, [])
 
   const states: EditorStates = {
+    isSaveFileAsDialogOpen,
     replaceTerm,
     searchTerm,
     undoStack,
@@ -576,6 +593,7 @@ export function useEditorHook(): EditorHookReturn {
     currentFileName,
     currentFilePath: currentFilePath || '',
     copied,
+    zoom,
     recentFiles,
     documentStats
   }
@@ -586,6 +604,9 @@ export function useEditorHook(): EditorHookReturn {
     saveFile,
     saveFileAs,
     createNewFile,
+    zoomIn,
+    zoomOut,
+    resetZoom,
     openFile,
     openFileWithPath: handleFileInputChangeIPC,
     exportFile,
@@ -593,6 +614,7 @@ export function useEditorHook(): EditorHookReturn {
     undo,
     redo,
     copyToClipboard,
+    toggleSaveFileAsDialog,
     toggleFullscreen,
     updateSettings,
     toggleSettingsDialog: () => {

@@ -8,6 +8,7 @@ import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts'
 import { PreviewPane } from './preview-pane'
 import { EditorPane } from './editor-pane'
 import { Toolbar } from './toolbar'
+import { ShortcutsDialog } from './shortcuts-dialog'
 import { EditorHookReturn } from '@/types'
 
 export default function AdvancedMarkdownEditor({
@@ -16,10 +17,9 @@ export default function AdvancedMarkdownEditor({
   editorStates: EditorHookReturn
 }): React.JSX.Element {
   const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split')
-  const [zoom, setZoom] = useState(100)
-  const { states, search, handlers, settings, refs, markdown } = editorStates
+  const { states, search, handlers, settings, refs, markdown, shortcuts } = editorStates
 
-  useKeyboardShortcuts(handlers, search.toggleSearch)
+  useKeyboardShortcuts(handlers, search.toggleSearch, shortcuts.toggleShortcuts)
   return (
     <div
       className={`min-h-screen bg-background transition-all duration-300 ${states.isFullscreen ? 'fixed inset-0 z-50' : ''}`}
@@ -41,8 +41,6 @@ export default function AdvancedMarkdownEditor({
               states={states}
               handlers={handlers}
               settings={settings}
-              zoom={zoom}
-              setZoom={setZoom}
               viewMode={viewMode}
               setViewMode={setViewMode}
             />
@@ -97,7 +95,7 @@ export default function AdvancedMarkdownEditor({
             textareaRef={refs.textareaRef}
             markdown={markdown}
             setMarkdown={handlers.setMarkdown}
-            zoom={zoom}
+            zoom={states.zoom}
             settings={settings}
             isActive={viewMode === 'edit' || viewMode === 'split'}
           />
@@ -105,7 +103,7 @@ export default function AdvancedMarkdownEditor({
           {/* Preview Pane */}
           <PreviewPane
             markdown={markdown}
-            zoom={zoom}
+            zoom={states.zoom}
             states={states}
             isActive={viewMode === 'preview' || viewMode === 'split'}
           />
@@ -121,11 +119,17 @@ export default function AdvancedMarkdownEditor({
           </div>
           <div className="flex items-center gap-4">
             {settings.autoSave && <span>Auto-save: ON</span>}
-            <span>Zoom: {zoom}%</span>
+            <span>Zoom: {states.zoom}%</span>
             <span>{viewMode.charAt(0).toUpperCase() + viewMode.slice(1)} mode</span>
           </div>
         </div>
       </div>
+
+      {/* Shortcuts Dialog */}
+      <ShortcutsDialog
+        showShortcuts={shortcuts.showShortcuts}
+        toggleShortcuts={shortcuts.toggleShortcuts}
+      />
     </div>
   )
 }

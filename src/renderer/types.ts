@@ -1,6 +1,8 @@
 import type React from 'react' // does this load react or just types?
 export interface EditorStates {
+  isSaveFileAsDialogOpen: boolean
   replaceTerm: string
+  zoom: number
   searchTerm: string
   undoStack: string[]
   redoStack: string[]
@@ -69,6 +71,9 @@ export interface EditorHookReturn {
 }
 
 export interface EditorHandlers {
+  zoomIn: () => void
+  zoomOut: () => void
+  resetZoom: () => void
   setMarkdown: (content: string) => void
   loadFile: (filePath: string) => Promise<void>
   saveFile: () => Promise<void>
@@ -81,9 +86,10 @@ export interface EditorHandlers {
   undo: () => void
   redo: () => void
   copyToClipboard: () => Promise<void>
-  toggleFullscreen: () => void
   updateSettings: (settings: Partial<EditorSettings>) => void
   toggleSettingsDialog: () => void
+  toggleFullscreen: () => void
+  toggleSaveFileAsDialog: () => void
 }
 
 export interface SearchHandlers {

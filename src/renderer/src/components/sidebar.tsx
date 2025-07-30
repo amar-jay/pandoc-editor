@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Folder, Moon, Search, Settings, Sun } from 'lucide-react'
+import { Folder, Moon, Search, Settings, Sun, Keyboard } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -25,9 +25,11 @@ function searchFileTree(tree: TreeNode[], query: string) {
 }
 export function AppSidebar({
   handleFileSelect,
-  toggleSettingsDialog
+  toggleSettingsDialog,
+  toggleShortcuts
 }: {
   toggleSettingsDialog: () => void
+  toggleShortcuts: () => void
   handleFileSelect: (path: string) => void
 }) {
   const [selectedFile, setSelectedFile] = React.useState<string>()
@@ -112,6 +114,18 @@ export function AppSidebar({
         <SidebarGroup className="mt-auto">
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem key={'Shortcuts'}>
+                <SidebarMenuButton
+                  onClick={() => {
+                    console.log('Toggle shortcuts dialog')
+                    toggleShortcuts()
+                  }}
+                  tooltip="Show Keyboard Shortcuts (Ctrl+/)"
+                >
+                  <Keyboard className="h-4 w-4" />
+                  <span>Shortcuts</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem key={'Toggle Theme'}>
                 <SidebarMenuButton
                   onClick={toggleTheme}

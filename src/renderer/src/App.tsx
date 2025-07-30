@@ -14,6 +14,7 @@ function App(): React.JSX.Element {
       <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <AppSidebar
           toggleSettingsDialog={() => editorStates.handlers.toggleSettingsDialog()}
+          toggleShortcuts={() => editorStates.shortcuts.toggleShortcuts()}
           handleFileSelect={editorStates.handlers.loadFile}
         />
         <SidebarInset>

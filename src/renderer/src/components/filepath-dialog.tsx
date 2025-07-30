@@ -12,9 +12,16 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Save } from 'lucide-react'
 
-export default function SaveFileAsDialog({ saveFileAs }: { saveFileAs: (path: string) => void }) {
+export default function SaveFileAsDialog({
+  saveFileAs,
+  open,
+  setOpen
+}: {
+  open: boolean
+  setOpen: (s: boolean) => void
+  saveFileAs: (path: string) => void
+}) {
   const [filePath, setFilePath] = useState('')
-  const [open, setOpen] = useState(false)
   const [error, setError] = useState('')
 
   const handleConfirm = () => {

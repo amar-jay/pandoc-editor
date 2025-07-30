@@ -39,8 +39,6 @@ interface ToolbarProps {
   states: EditorStates
   handlers: ReturnType<typeof useEditorHook>['handlers']
   settings: EditorSettings
-  zoom: number
-  setZoom: (value: number) => void
   viewMode: 'edit' | 'preview' | 'split'
   setViewMode: (mode: 'edit' | 'preview' | 'split') => void
 }
@@ -49,8 +47,6 @@ export function Toolbar({
   states,
   handlers,
   settings,
-  zoom,
-  setZoom,
   viewMode,
   setViewMode
 }: ToolbarProps) {
@@ -85,7 +81,11 @@ export function Toolbar({
       >
         <Save className="w-4 h-4" />
       </Button>
-      <SaveFileAsDialog saveFileAs={handlers.saveFileAs} />
+      <SaveFileAsDialog
+        open={states.isSaveFileAsDialogOpen}
+        setOpen={handlers.toggleSaveFileAsDialog}
+        saveFileAs={handlers.saveFileAs}
+      />
 
       <Separator orientation="vertical" className="h-6 border-2 hidden lg:block" />
 
@@ -240,19 +240,23 @@ export function Toolbar({
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setZoom(Math.max(50, zoom - 10))}
+        onClick={handlers.zoomOut}
         title="Zoom Out"
         className=" hidden lg:block"
       >
         <ZoomOut className="w-4 h-4" />
       </Button>
-      <span className="text-sm text-muted-foreground min-w-[3rem] text-center hidden lg:block">
-        {zoom}%
+      <span
+        className="text-sm text-muted-foreground min-w-[3rem] text-center hidden lg:block"
+        title="Double Click to reset zoom"
+        onDoubleClick={handlers.resetZoom}
+      >
+        {states.zoom}%
       </span>
       <Button
         variant="ghost"
         size="sm"
-        onClick={() => setZoom(Math.min(200, zoom + 10))}
+        onClick={handlers.zoomIn}
         title="Zoom In"
         className=" hidden lg:block"
       >
