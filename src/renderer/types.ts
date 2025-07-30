@@ -58,6 +58,10 @@ export interface EditorHookReturn {
   markdown: string
   settings: EditorSettings
   documentStats: DocumentStats
+  shortcuts: {
+    showShortcuts: boolean
+    toggleShortcuts: () => void
+  }
   states: EditorStates
   handlers: EditorHandlers
   search: SearchHandlers

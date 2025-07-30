@@ -40,6 +40,7 @@ export function useEditorHook(): EditorHookReturn {
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null)
   const [currentFileName, setCurrentFileName] = useState('')
   const [isModified, setIsModified] = useState(false)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   // UI state
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -393,6 +394,35 @@ export function useEditorHook(): EditorHookReturn {
     updateDocumentStats(next)
   }, [redoStack, markdown, updateDocumentStats])
 
+  // Helper function to scroll textarea to selection
+  const scrollToSelection = useCallback((textarea: HTMLTextAreaElement, start: number) => {
+    // Get textarea styles for calculations
+    const styles = window.getComputedStyle(textarea)
+    const lineHeight = parseFloat(styles.lineHeight) || parseInt(styles.fontSize) * 1.2
+    const paddingTop = parseFloat(styles.paddingTop) || 0
+
+    // Calculate which line the selection starts on
+    const textBeforeSelection = textarea.value.substring(0, start)
+    const lineNumber = textBeforeSelection.split('\n').length - 1
+
+    // Calculate the pixel position of the line
+    const linePosition = lineNumber * lineHeight + paddingTop
+
+    // Get textarea dimensions
+    const textareaHeight = textarea.clientHeight
+    const scrollTop = textarea.scrollTop
+
+    // Check if the line is visible in the current viewport
+    const isAboveViewport = linePosition < scrollTop
+    const isBelowViewport = linePosition > scrollTop + textareaHeight - lineHeight
+
+    if (isAboveViewport || isBelowViewport) {
+      // Scroll to center the line in the viewport
+      const targetScrollTop = Math.max(0, linePosition - textareaHeight / 2 + lineHeight / 2)
+      textarea.scrollTop = targetScrollTop
+    }
+  }, [])
+
   // Search operations
   const search = useCallback(() => {
     if (!searchTerm) return
@@ -400,6 +430,7 @@ export function useEditorHook(): EditorHookReturn {
     const textarea = textareaRef.current
     if (!textarea) return
 
+    // Search in the actual textarea content, not the full markdown with frontmatter
     const text = textarea.value.toLowerCase()
     const searchLower = searchTerm.toLowerCase()
     const index = text.indexOf(searchLower, textarea.selectionEnd)
@@ -408,15 +439,21 @@ export function useEditorHook(): EditorHookReturn {
       textarea.focus()
       console.log('>>text area selected range in search: ', searchTerm.length, index)
       textarea.setSelectionRange(index, index + searchTerm.length)
+
+      // Scroll to make the selected text visible
+      scrollToSelection(textarea, index)
     } else {
       // Search from beginning if not found after cursor
       const indexFromStart = text.indexOf(searchLower)
       if (indexFromStart !== -1) {
         textarea.focus()
         textarea.setSelectionRange(indexFromStart, indexFromStart + searchTerm.length)
+
+        // Scroll to make the selected text visible
+        scrollToSelection(textarea, indexFromStart)
       }
     }
-  }, [searchTerm])
+  }, [searchTerm, scrollToSelection])
 
   const replace = useCallback(() => {
     if (!searchTerm) return
@@ -426,12 +463,21 @@ export function useEditorHook(): EditorHookReturn {
 
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
-    const selectedText = markdown.substring(start, end)
+    // Use the textarea content, not the full markdown with frontmatter
+    const selectedText = textarea.value.substring(start, end)
 
     if (selectedText.toLowerCase() === searchTerm.toLowerCase()) {
-      const newText = markdown.substring(0, start) + replaceTerm + markdown.substring(end)
+      // Update the textarea content directly
+      const newContent =
+        textarea.value.substring(0, start) + replaceTerm + textarea.value.substring(end)
 
-      setMarkdown(newText)
+      // Update the textarea value
+      textarea.value = newContent
+
+      // Trigger change event to update the content properly
+      const event = new Event('input', { bubbles: true })
+      Object.defineProperty(event, 'target', { value: textarea, enumerable: true })
+      textarea.dispatchEvent(event)
 
       const timeoutId = setTimeout(() => {
         if (textareaRef.current) {
@@ -446,18 +492,27 @@ export function useEditorHook(): EditorHookReturn {
 
       cursorTimeoutRefs.current.add(timeoutId)
     }
-  }, [searchTerm, replaceTerm, markdown, setMarkdown])
+  }, [searchTerm, replaceTerm])
 
   const replaceAll = useCallback(() => {
     if (!searchTerm) return
 
-    const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
-    const newMarkdown = markdown.replace(regex, replaceTerm)
+    const textarea = textareaRef.current
+    if (!textarea) return
 
-    if (newMarkdown !== markdown) {
-      setMarkdown(newMarkdown)
+    const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+    const newContent = textarea.value.replace(regex, replaceTerm)
+
+    if (newContent !== textarea.value) {
+      // Update the textarea value
+      textarea.value = newContent
+
+      // Trigger change event to update the content properly
+      const event = new Event('input', { bubbles: true })
+      Object.defineProperty(event, 'target', { value: textarea, enumerable: true })
+      textarea.dispatchEvent(event)
     }
-  }, [searchTerm, replaceTerm, markdown, setMarkdown])
+  }, [searchTerm, replaceTerm])
 
   // Utility functions
   const copyToClipboard = useCallback(async () => {
@@ -480,6 +535,9 @@ export function useEditorHook(): EditorHookReturn {
     setIsFullscreen((prev) => !prev)
   }, [])
 
+  const toggleShortcuts = useCallback(() => {
+    setShowShortcuts((prev) => !prev)
+  }, [])
   const toggleSearch = useCallback(() => {
     setShowSearch((prev) => !prev)
   }, [])
@@ -562,6 +620,10 @@ export function useEditorHook(): EditorHookReturn {
     documentStats,
     states,
     handlers,
+    shortcuts: {
+      showShortcuts,
+      toggleShortcuts
+    },
     search: searchHandlers,
     refs
   }
