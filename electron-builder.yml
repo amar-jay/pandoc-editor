@@ -1,5 +1,6 @@
 appId: com.amarjay.pandoc-editor
-productName: pandoc-editor
+buildVersion: 1.0.0
+productName: Pandoc Editor
 directories:
   buildResources: build
 files:
@@ -12,7 +13,8 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: pandoc-editor
+  executableName: Pandoc Editor
+  icon: resources/icon-dark.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -29,17 +31,20 @@ mac:
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
+  icon: resources/icon-dark.png
   target:
     - AppImage
     - snap
     - deb
-  maintainer: electronjs.org
-  category: Utility
+  maintainer: amarjay.com
+  category: Office
+  synopsis: A simple editor for Pandoc documents.
+  description: A simple editor for Pandoc documents.
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
-publish:
-  provider: generic
-  url: https://example.com/auto-updates
+# publish:
+#   provider: generic
+#   url: https://example.com/auto-updates
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
