@@ -2,7 +2,7 @@ import icon from '../../resources/icon.png?asset'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
-import { app, shell, dialog, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, dialog, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { ensurePandocInstalled } from './install-pandoc'
@@ -12,11 +12,13 @@ import type { PandocOptions } from '../preload/types'
 import * as pandoc from './pandoc'
 
 function createWindow(): BrowserWindow {
+  const isDarkMode = nativeTheme.shouldUseDarkColors
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
+    icon: path.join(app.getAppPath(), 'resources', isDarkMode ? 'icon-dark.png' : 'icon-light.png'),
     autoHideMenuBar: true,
     frame: false, // Remove the default frame for custom styling
     // transparent: true, // Enable transparency for rounded corners
