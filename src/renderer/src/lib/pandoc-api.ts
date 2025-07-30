@@ -1,140 +1,30 @@
-import type { PandocOptions, ConversionResult, AvailableEnginesResponse } from '../../types'
-// import { join, basename } from 'path'
-
-// Electron IPC wrapper for Pandoc functions
-export class PandocAPI {
-  private static instance: PandocAPI
-
-  static getInstance(): PandocAPI {
-    if (!PandocAPI.instance) {
-      PandocAPI.instance = new PandocAPI()
-    }
-    return PandocAPI.instance
-  }
-
-  /**
-   * Convert a markdown file using Pandoc with custom options
-   */
-  async convert(
-    inputPath: string,
-    outputPath: string,
-    options: PandocOptions
-  ): Promise<ConversionResult> {
-    return window.electron.ipcRenderer.invoke('pandoc-convert', inputPath, outputPath, options)
-  }
-
-  /**
-   * Convert markdown to PDF
-   */
-  async toPDF(
-    inputPath: string,
-    outputPath?: string,
-    options?: Partial<PandocOptions>
-  ): Promise<ConversionResult> {
-    return window.electron.ipcRenderer.invoke('pandoc-to-pdf', inputPath, outputPath, options)
-  }
-
-  /**
-   * Convert markdown to HTML
-   */
-  async toHTML(
-    inputPath: string,
-    outputPath?: string,
-    options?: Partial<PandocOptions>
-  ): Promise<ConversionResult> {
-    return window.electron.ipcRenderer.invoke('pandoc-to-html', inputPath, outputPath, options)
-  }
-
-  /**
-   * Convert markdown to LaTeX
-   */
-  async toLaTeX(
-    inputPath: string,
-    outputPath?: string,
-    options?: Partial<PandocOptions>
-  ): Promise<ConversionResult> {
-    return window.electron.ipcRenderer.invoke('pandoc-to-latex', inputPath, outputPath, options)
-  }
-
-  /**
-   * Convert markdown to DOCX
-   */
-  async toDOCX(
-    inputPath: string,
-    outputPath?: string,
-    options?: Partial<PandocOptions>
-  ): Promise<ConversionResult> {
-    return window.electron.ipcRenderer.invoke('pandoc-to-docx', inputPath, outputPath, options)
-  }
-
-  /**
-   * Convert markdown to EPUB
-   */
-  async toEPUB(
-    inputPath: string,
-    outputPath?: string,
-    options?: Partial<PandocOptions>
-  ): Promise<ConversionResult> {
-    return window.electron.ipcRenderer.invoke('pandoc-to-epub', inputPath, outputPath, options)
-  }
-
-  /**
-   * Quick conversion with sensible defaults
-   */
-  async quickConvert(
-    inputPath: string,
-    format: 'pdf' | 'html' | 'latex' | 'docx' | 'epub',
-    outputDir?: string
-  ): Promise<ConversionResult> {
-    return window.electron.ipcRenderer.invoke('pandoc-quick-convert', inputPath, format, outputDir)
-  }
-
-  /**
-   * Open the converted file with system default application
-   */
-  async openFile(filePath: string): Promise<{ success: boolean; error?: string }> {
-    return window.electron.ipcRenderer.invoke('open-converted-file', filePath)
-  }
-
-  /**
-   * Get available PDF engines on the system
-   */
-  async getAvailablePDFEngines(): Promise<AvailableEnginesResponse> {
-    return window.electron.ipcRenderer.invoke('get-available-pdf-engines')
-  }
-}
-
-// Export singleton instance
-export const pandocAPI = PandocAPI.getInstance()
+import path from 'path'
+import type { PandocOptions, ConversionResult } from '../../types'
 
 // Utility functions for common conversion tasks
 export class PandocUtils {
-  /**
-   * Convert and open file in one step
-   */
-  static async convertAndOpen(
-    inputPath: string,
-    format: 'pdf' | 'html' | 'latex' | 'docx' | 'epub'
-  ): Promise<ConversionResult> {
-    const result = await pandocAPI.quickConvert(inputPath, format)
-
-    if (result.success && result.outputPath) {
-      await pandocAPI.openFile(result.outputPath)
-    }
-
-    return result
-  }
-
   /**
    * Batch convert to multiple formats
    */
   static async batchConvert(
     inputPath: string,
-    formats: Array<'pdf' | 'html' | 'latex' | 'docx' | 'epub'>,
+    options: Partial<PandocOptions>[] = [],
     outputDir?: string
   ): Promise<ConversionResult[]> {
+    const generateOutputPath = (format?: string) => {
+      if (!format) {
+        format = 'pdf'
+      }
+      let outputPath = inputPath.replace(/\.md$/, '.' + format)
+      if (outputDir) {
+        outputPath = path.join(outputDir, path.basename(outputPath))
+      }
+      return outputPath
+    }
     const results = await Promise.allSettled(
-      formats.map((format) => pandocAPI.quickConvert(inputPath, format, outputDir))
+      options.map((opts) =>
+        window.pandoc.convert(inputPath, generateOutputPath(opts.outputFormat), opts)
+      )
     )
 
     return results.map((result) =>
@@ -169,7 +59,7 @@ export class PandocUtils {
       }
     }
 
-    return pandocAPI.toPDF(inputPath, outputPath, options)
+    return window.pandoc.toPDF(inputPath, outputPath, options)
   }
 
   /**
@@ -192,7 +82,7 @@ export class PandocUtils {
         : undefined
     }
 
-    return pandocAPI.toHTML(inputPath, outputPath, options)
+    return window.pandoc.toHTML(inputPath, outputPath, options)
   }
 
   /**
@@ -212,7 +102,7 @@ export class PandocUtils {
       }
     }
 
-    return pandocAPI.toHTML(inputPath, outputPath, options)
+    return window.pandoc.toHTML(inputPath, outputPath, options)
   }
 
   /**

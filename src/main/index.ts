@@ -1,32 +1,15 @@
-import { app, shell, dialog, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
+import { app, shell, dialog, BrowserWindow, ipcMain } from 'electron'
+import { join } from 'path'
+import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { ensurePandocInstalled } from './install-pandoc'
-import { buildFileTree, findMarkdownFiles } from './filesystem'
-import {
-  convertWithPandoc,
-  convertToPDF,
-  convertToHTML,
-  convertToLaTeX,
-  convertToDOCX,
-  convertToEPUB,
-  quickConvert,
-  openConvertedFile,
-  getAvailablePDFEngines,
-  type PandocOptions
-} from './pandoc'
+import { buildFileTree, findMarkdownFiles, getDefaultPath, getFilePath } from './filesystem'
 import matter from 'gray-matter'
-import { getFilePath } from './utils'
-
-export interface AlertTypes {
-  INFO: 'info'
-  WARNING: 'warning'
-  ERROR: 'error'
-}
+import type { PandocOptions } from '../preload/types'
+import * as pandoc from './pandoc'
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -38,7 +21,7 @@ function createWindow(): BrowserWindow {
     frame: false, // Remove the default frame for custom styling
     // transparent: true, // Enable transparency for rounded corners
     titleBarOverlay: {
-      color: '#000',
+      color: '#3276e4',
       height: 34,
       symbolColor: '#ccc'
     },
@@ -49,7 +32,6 @@ function createWindow(): BrowserWindow {
       sandbox: false
     }
   })
-
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
@@ -75,7 +57,7 @@ function createWindow(): BrowserWindow {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.amarjay')
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -112,6 +94,23 @@ app.whenReady().then(() => {
       return { success: true, content, fileName }
     } catch (error) {
       console.error('Error reading file:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  // IPC hander to fetch default path
+  ipcMain.handle('get-default-path', () => {
+    try {
+      const path = getDefaultPath()
+      return {
+        success: true,
+        path
+      }
+    } catch (error) {
+      console.error('Error fetching default path:', error)
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -167,21 +166,18 @@ app.whenReady().then(() => {
   )
 
   // IPC handler to get file tree structure
-  ipcMain.handle(
-    'get-file-tree',
-    async (_, dirPath = path.join(os.homedir(), '.pandoc-editor')) => {
-      try {
-        const fileTree = await buildFileTree(dirPath, dirPath)
-        return { success: true, tree: fileTree }
-      } catch (error) {
-        console.error('Error building file tree:', error)
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred'
-        }
+  ipcMain.handle('get-file-tree', async (_, dirPath = getDefaultPath()) => {
+    try {
+      const fileTree = await buildFileTree(dirPath, dirPath)
+      return { success: true, tree: fileTree }
+    } catch (error) {
+      console.error('Error building file tree:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
       }
     }
-  )
+  })
 
   // IPC handler to update a markdown file
   ipcMain.handle('update-markdown-file', async (_, filePath: string, content: string) => {
@@ -216,11 +212,12 @@ app.whenReady().then(() => {
   ipcMain.handle('open-file', async (_, filePath: string) => {
     try {
       filePath = await getFilePath(filePath)
+      console.log('file path', filePath)
       if (fs.existsSync(filePath)) {
         shell.openPath(filePath)
         return { success: true }
       } else {
-        return { success: false, error: 'File does not exist' }
+        return { success: false, error: 'File does not exist ' + filePath }
       }
     } catch (error) {
       console.error('Error opening file:', error)
@@ -231,12 +228,51 @@ app.whenReady().then(() => {
     }
   })
 
+  // File picker dialog
+  ipcMain.handle('show-open-dialog', async () => {
+    try {
+      const focusedWindow = BrowserWindow.getFocusedWindow()
+      if (!focusedWindow) {
+        return { success: false, error: 'No focused window available' }
+      }
+
+      const defaultPath = getDefaultPath()
+      const defaultFile = path.join(defaultPath, 'README.md')
+      console.log('THE DEFAULT PATH IS', defaultFile)
+      const result = await dialog.showOpenDialog(focusedWindow, {
+        defaultPath: defaultFile,
+        properties: ['openFile'],
+        filters: [
+          { name: 'Markdown Files', extensions: ['md', 'markdown', 'mdown', 'mkdn', 'mdx'] },
+          { name: 'LaTeX Files (not supported yet)', extensions: ['tex', 'latex', 'tx'] },
+          { name: 'Text Files', extensions: ['txt'] },
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      })
+
+      if (result.canceled || !result.filePaths.length) {
+        return { success: false, canceled: true }
+      }
+
+      return { success: true, filePath: result.filePaths[0] }
+    } catch (error) {
+      console.error('Error showing open dialog:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  // Ensure Pandoc is installed
+  ensurePandocInstalled()
+
   // Pandoc conversion IPC handlers
   ipcMain.handle(
     'pandoc-convert',
-    async (_, inputPath: string, outputPath: string, options: PandocOptions) => {
+    async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
       try {
-        const result = await convertWithPandoc(inputPath, outputPath, options)
+        const result = await pandoc.convertWithPandoc(inputPath, outputPath, options)
         return result
       } catch (error) {
         console.error('Pandoc conversion error:', error)
@@ -252,7 +288,7 @@ app.whenReady().then(() => {
     'pandoc-to-pdf',
     async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
       try {
-        const result = await convertToPDF(inputPath, outputPath, options)
+        const result = await pandoc.convertToPDF(inputPath, outputPath, options)
         return result
       } catch (error) {
         console.error('PDF conversion error:', error)
@@ -268,7 +304,7 @@ app.whenReady().then(() => {
     'pandoc-to-html',
     async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
       try {
-        const result = await convertToHTML(inputPath, outputPath, options)
+        const result = await pandoc.convertToHTML(inputPath, outputPath, options)
         return result
       } catch (error) {
         console.error('HTML conversion error:', error)
@@ -284,7 +320,7 @@ app.whenReady().then(() => {
     'pandoc-to-latex',
     async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
       try {
-        const result = await convertToLaTeX(inputPath, outputPath, options)
+        const result = await pandoc.convertToLaTeX(inputPath, outputPath, options)
         return result
       } catch (error) {
         console.error('LaTeX conversion error:', error)
@@ -300,7 +336,7 @@ app.whenReady().then(() => {
     'pandoc-to-docx',
     async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
       try {
-        const result = await convertToDOCX(inputPath, outputPath, options)
+        const result = await pandoc.convertToDOCX(inputPath, outputPath, options)
         return result
       } catch (error) {
         console.error('DOCX conversion error:', error)
@@ -316,7 +352,7 @@ app.whenReady().then(() => {
     'pandoc-to-epub',
     async (_, inputPath: string, outputPath?: string, options?: Partial<PandocOptions>) => {
       try {
-        const result = await convertToEPUB(inputPath, outputPath, options)
+        const result = await pandoc.convertToEPUB(inputPath, outputPath, options)
         return result
       } catch (error) {
         console.error('EPUB conversion error:', error)
@@ -327,56 +363,6 @@ app.whenReady().then(() => {
       }
     }
   )
-
-  ipcMain.handle(
-    'pandoc-quick-convert',
-    async (
-      _,
-      inputPath: string,
-      format: 'pdf' | 'html' | 'latex' | 'docx' | 'epub',
-      outputDir?: string
-    ) => {
-      try {
-        const result = await quickConvert(inputPath, format, outputDir)
-        return result
-      } catch (error) {
-        console.error('Quick conversion error:', error)
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error occurred'
-        }
-      }
-    }
-  )
-
-  ipcMain.handle('open-converted-file', async (_, filePath: string) => {
-    try {
-      await openConvertedFile(filePath)
-      return { success: true }
-    } catch (error) {
-      console.error('Error opening file:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
-      }
-    }
-  })
-
-  ipcMain.handle('get-available-pdf-engines', async () => {
-    try {
-      const engines = await getAvailablePDFEngines()
-      return { success: true, engines }
-    } catch (error) {
-      console.error('Error getting PDF engines:', error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
-      }
-    }
-  })
-
-  // Ensure Pandoc is installed
-  ensurePandocInstalled(app)
 
   // Create the main window
   createWindow()

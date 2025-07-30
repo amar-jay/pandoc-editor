@@ -10,6 +10,8 @@ import type {
 import { calculateStats } from '@renderer/lib/utils'
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { defaultMarkdown } from '../default-markdown'
+import { loadFromStorage, saveToStorage } from '@renderer/lib/local-storage'
+import { exportToFile } from './use-export-file'
 
 // Constants
 const STORAGE_KEYS = {
@@ -22,24 +24,6 @@ const STORAGE_KEYS = {
 const MAX_UNDO_STACK_SIZE = 50
 const MAX_RECENT_FILES = 10
 const AUTO_SAVE_DELAY = 2000
-
-// Utility functions
-const loadFromStorage = <T>(key: string, defaultValue: T): T => {
-  try {
-    const item = localStorage.getItem(key)
-    return item ? JSON.parse(item) : defaultValue
-  } catch {
-    return defaultValue
-  }
-}
-
-const saveToStorage = (key: string, value: unknown): void => {
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch (error) {
-    console.warn('Failed to save to localStorage:', error)
-  }
-}
 
 const showError = (message: string, error?: unknown): void => {
   console.error(message, error)
@@ -101,7 +85,6 @@ export function useEditorHook(): EditorHookReturn {
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const copiedTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const cursorTimeoutRefs = useRef<Set<NodeJS.Timeout>>(new Set())
@@ -290,9 +273,20 @@ export function useEditorHook(): EditorHookReturn {
     updateDocumentStats('')
   }, [isModified, updateDocumentStats])
 
-  const openFile = useCallback(() => {
-    fileInputRef.current?.click()
-  }, [fileInputRef])
+  const openFile = useCallback(async () => {
+    if (isModified && !confirmUnsavedChanges()) return
+
+    try {
+      const result = await window.api.showOpenDialog()
+      if (result.success && result.filePath) {
+        await loadFile(result.filePath)
+      } else if (!result.canceled && result.error) {
+        showError(`Failed to open file: ${result.error}`)
+      }
+    } catch (error) {
+      showError('Error opening file dialog. Please try again.', error)
+    }
+  }, [isModified, loadFile])
 
   // Handler for when a file is selected via the file input
 
@@ -322,101 +316,10 @@ export function useEditorHook(): EditorHookReturn {
     [updateDocumentStats]
   )
 
-  const handleFileInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (!file) return
-
-      if (isModified && !confirmUnsavedChanges()) {
-        e.target.value = ''
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const content = event.target?.result as string
-        setMarkdownState(content)
-        setCurrentFilePath(null)
-        setCurrentFileName(file.name)
-        setIsModified(false)
-        setUndoStack([])
-        setRedoStack([])
-        updateDocumentStats(content)
-
-        setRecentFiles((prev) => {
-          const filtered = prev.filter((f) => f !== file.name)
-          return [file.name, ...filtered].slice(0, MAX_RECENT_FILES)
-        })
-      }
-      reader.onerror = () => showError('Failed to read file')
-      reader.readAsText(file)
-      e.target.value = ''
-    },
-    [isModified, updateDocumentStats]
-  )
-
   // Export functionality
   const exportFile = useCallback(
     (format: 'html' | 'txt' | 'md') => {
-      let content = ''
-      let filename = currentFileName.replace(/\.md$/, '')
-      let mimeType = ''
-
-      switch (format) {
-        case 'html':
-          content = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>${filename}</title>
-    <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 2rem; 
-            line-height: 1.6; 
-            color: #333;
-        }
-        code { 
-            background: #f4f4f4; 
-            padding: 2px 4px; 
-            border-radius: 3px; 
-            font-family: 'Courier New', monospace;
-        }
-        pre { 
-            background: #f4f4f4; 
-            padding: 1rem; 
-            border-radius: 5px; 
-            overflow-x: auto; 
-        }
-        blockquote { 
-            border-left: 4px solid #ddd; 
-            margin: 0; 
-            padding-left: 1rem; 
-            color: #666; 
-        }
-        h1, h2, h3, h4, h5, h6 { color: #2c3e50; }
-    </style>
-</head>
-<body>
-    <pre>${markdown.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-</body>
-</html>`
-          filename += '.html'
-          mimeType = 'text/html'
-          break
-        case 'txt':
-          content = markdown.replace(/[#*`_~[\]()]/g, '').replace(/\n+/g, '\n')
-          filename += '.txt'
-          mimeType = 'text/plain'
-          break
-        default:
-          content = markdown
-          filename += '.md'
-          mimeType = 'text/markdown'
-      }
-
+      const { content, filename, mimeType } = exportToFile(markdown, currentFileName, format)
       const blob = new Blob([content], { type: mimeType })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -431,33 +334,41 @@ export function useEditorHook(): EditorHookReturn {
   )
 
   // Editor operations
-  const insertMarkdown = useCallback(
-    (before: string, after = '') => {
-      const textarea = textareaRef.current
-      if (!textarea) return
+  const insertMarkdown = useCallback((before: string, after = '') => {
+    const textarea = textareaRef.current
+    if (!textarea) return
 
-      const start = textarea.selectionStart
-      const end = textarea.selectionEnd
-      const selectedText = markdown.substring(start, end)
-      const newText =
-        markdown.substring(0, start) + before + selectedText + after + markdown.substring(end)
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const textareaContent = textarea.value
+    const selectedText = textareaContent.substring(start, end)
+    const newContent =
+      textareaContent.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      textareaContent.substring(end)
 
-      setMarkdown(newText)
+    // Update the textarea content directly first
+    textarea.value = newContent
 
-      // Restore cursor position
-      const timeoutId = setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus()
-          const newCursorPos = start + before.length + selectedText.length + after.length
-          textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
-        }
-        cursorTimeoutRefs.current.delete(timeoutId)
-      }, 0)
+    // Create a synthetic event to trigger the change handler
+    const event = new Event('input', { bubbles: true })
+    Object.defineProperty(event, 'target', { value: textarea, enumerable: true })
+    textarea.dispatchEvent(event)
 
-      cursorTimeoutRefs.current.add(timeoutId)
-    },
-    [markdown, setMarkdown]
-  )
+    // Restore cursor position
+    const timeoutId = setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus()
+        const newCursorPos = start + before.length + selectedText.length + after.length
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+      }
+      cursorTimeoutRefs.current.delete(timeoutId)
+    }, 0)
+
+    cursorTimeoutRefs.current.add(timeoutId)
+  }, [])
 
   // Undo/Redo
   const undo = useCallback(() => {
@@ -495,6 +406,7 @@ export function useEditorHook(): EditorHookReturn {
 
     if (index !== -1) {
       textarea.focus()
+      console.log('>>text area selected range in search: ', searchTerm.length, index)
       textarea.setSelectionRange(index, index + searchTerm.length)
     } else {
       // Search from beginning if not found after cursor
@@ -618,7 +530,6 @@ export function useEditorHook(): EditorHookReturn {
     createNewFile,
     openFile,
     openFileWithPath: handleFileInputChangeIPC,
-    handleFileInputChange,
     exportFile,
     insertMarkdown,
     undo,
@@ -642,8 +553,7 @@ export function useEditorHook(): EditorHookReturn {
   }
 
   const refs: EditorRefs = {
-    textareaRef,
-    fileInputRef
+    textareaRef
   }
 
   return {
@@ -655,79 +565,4 @@ export function useEditorHook(): EditorHookReturn {
     search: searchHandlers,
     refs
   }
-}
-
-export function useKeyboardShortcuts(
-  handlers: Pick<
-    EditorHandlers,
-    | 'saveFile'
-    | 'openFile'
-    | 'createNewFile'
-    | 'insertMarkdown'
-    | 'undo'
-    | 'redo'
-    | 'toggleFullscreen'
-  >,
-  toggleSearch: () => void
-) {
-  const { saveFile, openFile, createNewFile, insertMarkdown, undo, redo, toggleFullscreen } =
-    handlers
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case 's':
-            e.preventDefault()
-            saveFile()
-            break
-          case 'o':
-            e.preventDefault()
-            openFile()
-            break
-          case 'n':
-            e.preventDefault()
-            createNewFile()
-            break
-          case 'f':
-            e.preventDefault()
-            toggleSearch()
-            break
-          case 'z':
-            if (e.shiftKey) {
-              e.preventDefault()
-              redo()
-            } else {
-              e.preventDefault()
-              undo()
-            }
-            break
-          case 'b':
-            e.preventDefault()
-            insertMarkdown('**', '**')
-            break
-          case 'i':
-            e.preventDefault()
-            insertMarkdown('*', '*')
-            break
-        }
-      }
-      if (e.key === 'F11') {
-        e.preventDefault()
-        toggleFullscreen()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [
-    saveFile,
-    openFile,
-    createNewFile,
-    toggleSearch,
-    insertMarkdown,
-    redo,
-    undo,
-    toggleFullscreen
-  ])
 }

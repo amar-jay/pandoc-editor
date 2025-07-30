@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, X } from 'lucide-react'
-import { useKeyboardShortcuts } from './hooks/editor-hook'
+import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts'
 import { PreviewPane } from './preview-pane'
 import { EditorPane } from './editor-pane'
 import { Toolbar } from './toolbar'
@@ -92,21 +92,23 @@ export default function AdvancedMarkdownEditor({
           }`}
         >
           {/* Editor Pane */}
-          {(viewMode === 'edit' || viewMode === 'split') && (
-            <EditorPane
-              states={states}
-              textareaRef={refs.textareaRef}
-              markdown={markdown}
-              setMarkdown={handlers.setMarkdown}
-              zoom={zoom}
-              settings={settings}
-            />
-          )}
+          <EditorPane
+            states={states}
+            textareaRef={refs.textareaRef}
+            markdown={markdown}
+            setMarkdown={handlers.setMarkdown}
+            zoom={zoom}
+            settings={settings}
+            isActive={viewMode === 'edit' || viewMode === 'split'}
+          />
 
           {/* Preview Pane */}
-          {(viewMode === 'preview' || viewMode === 'split') && (
-            <PreviewPane markdown={markdown} zoom={zoom} states={states} />
-          )}
+          <PreviewPane
+            markdown={markdown}
+            zoom={zoom}
+            states={states}
+            isActive={viewMode === 'preview' || viewMode === 'split'}
+          />
         </div>
 
         {/* Status Bar */}
@@ -124,15 +126,6 @@ export default function AdvancedMarkdownEditor({
           </div>
         </div>
       </div>
-
-      {/* Hidden file input */}
-      <input
-        ref={refs.fileInputRef}
-        type="file"
-        accept=".md,.txt"
-        onChange={handlers.handleFileInputChange}
-        className="hidden"
-      />
     </div>
   )
 }

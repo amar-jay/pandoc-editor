@@ -2,10 +2,42 @@ import path from 'path'
 import os from 'os'
 import fs from 'fs'
 
+export const getDefaultPath = () => {
+  const DEFAULT_PATH = path.join(os.homedir(), 'Documents', 'pandoc-editor')
+  // ensure the default path exists
+  if (!fs.existsSync(DEFAULT_PATH)) {
+    fs.mkdirSync(DEFAULT_PATH, { recursive: true })
+  }
+  return DEFAULT_PATH
+}
+
+export const getFilePath = async (filePath: string, createDir = false): Promise<string> => {
+  // Normalize the path to handle different path separators
+  let normalizedPath = path.normalize(filePath)
+
+  // Check if path is absolute using Node.js built-in method
+  let isAbsolute = path.isAbsolute(normalizedPath)
+  if (os.platform() !== 'win32') {
+    isAbsolute &&= normalizedPath.startsWith('/home')
+  }
+
+  // If the path is not absolute, treat it as relative to the default directory
+  if (!isAbsolute) {
+    normalizedPath = path.join(getDefaultPath(), normalizedPath)
+  }
+
+  // Create directory if requested
+  if (createDir) {
+    const dirname = path.dirname(normalizedPath)
+    await fs.promises.mkdir(dirname, { recursive: true })
+    console.log('Saving file to:', dirname, normalizedPath)
+  }
+
+  return normalizedPath
+}
+
 // Function to recursively find all .md files
-export async function findMarkdownFiles(
-  dirPath = path.join(os.homedir(), '.pandoc-editor')
-): Promise<string[]> {
+export async function findMarkdownFiles(dirPath = getDefaultPath()): Promise<string[]> {
   const markdownFiles: string[] = []
 
   try {
@@ -17,9 +49,7 @@ export async function findMarkdownFiles(
       if (item.isDirectory()) {
         // Skip common directories that typically don't contain user markdown files
         if (
-          !['node_modules', '.git', 'dist', 'build', '.next', '.nuxt', 'coverage'].includes(
-            item.name
-          )
+          !['node_modules', '.git', 'dist', 'build', '.resources', 'coverage'].includes(item.name)
         ) {
           const subFiles = await findMarkdownFiles(fullPath)
           markdownFiles.push(...subFiles)
@@ -85,6 +115,3 @@ export async function buildFileTree(dirPath: string, basePath: string): Promise<
     return a.name.localeCompare(b.name)
   })
 }
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

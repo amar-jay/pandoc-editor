@@ -14,8 +14,9 @@ interface PreviewPaneProps {
   states: EditorStates
   zoom: number
   markdown: string
+  isActive?: boolean
 }
-export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
+export function PreviewPane({ states, markdown, zoom, isActive = false }: PreviewPaneProps) {
   // remove frontmatter
   const [previewMarkdown, setPreviewMarkdown] = useState('')
 
@@ -46,6 +47,10 @@ export function PreviewPane({ states, markdown, zoom }: PreviewPaneProps) {
       setPreviewMarkdown('')
     }
   }, [markdown])
+
+  if (!isActive) {
+    return <></>
+  }
 
   return (
     <Card className="flex flex-col pt-0 scroll-auto overflow-auto scrollbar max-h-full">

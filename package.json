@@ -1,10 +1,10 @@
 {
   "name": "pandoc-editor",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "just another markdown editor that was built in 2 days",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "amarjay.com",
+  "homepage": "https://pandoc-editor.amarjay.com",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",

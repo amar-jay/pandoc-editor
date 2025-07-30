@@ -14,6 +14,7 @@ import {
 import path from 'path'
 import unzipper from 'unzipper'
 import tar from 'tar'
+import { getDefaultPath } from './filesystem'
 
 const version = '3.7.0.2'
 
@@ -86,8 +87,8 @@ async function extractFile(filePath: string, outputPath: string): Promise<void> 
   }
 }
 
-export async function installPandoc(app: Electron.App) {
-  const destDir = getPandocDir(app)
+export async function installPandoc() {
+  const destDir = getPandocDir()
   const url = getPandocDownloadURL()
   const tempFile = path.join(tmpdir(), `pandoc-download${path.extname(url)}`)
 
@@ -101,14 +102,14 @@ export async function installPandoc(app: Electron.App) {
   console.log('✅ Pandoc installed at:', destDir)
 }
 
-const getPandocDir = (app: Electron.App): string => {
-  const destDir = path.join(app.getAppPath(), 'resources', 'pandoc')
+const getPandocDir = (): string => {
+  const destDir = path.join(getDefaultPath(), '.resources', 'pandoc')
   return destDir
 }
 
-export function getPandocPath(app: Electron.App): string {
+export function getPandocPath(): string {
   const plat = platform()
-  const destDir = getPandocDir(app)
+  const destDir = getPandocDir()
 
   if (plat === 'win32') {
     return path.join(destDir, 'pandoc.exe')
@@ -117,11 +118,11 @@ export function getPandocPath(app: Electron.App): string {
   }
 }
 
-export function ensurePandocInstalled(app: Electron.App) {
-  const binary = getPandocPath(app)
+export function ensurePandocInstalled() {
+  const binary = getPandocPath()
   if (!fs.existsSync(binary)) {
     console.log('Pandoc not found. Installing...')
-    installPandoc(app).catch((err) => {
+    installPandoc().catch((err) => {
       console.error('❌ Failed to install Pandoc:', err.message)
       process.exit(1)
     })

@@ -70,8 +70,7 @@ export interface EditorHandlers {
   saveFile: () => Promise<void>
   saveFileAs: (filePath?: string) => Promise<void>
   createNewFile: () => void
-  openFile: () => void
-  handleFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  openFile: () => Promise<void>
   openFileWithPath: (path: string) => void
   exportFile: (format: 'html' | 'txt' | 'md') => void
   insertMarkdown: (before: string, after?: string) => void
@@ -95,7 +94,6 @@ export interface SearchHandlers {
 
 export interface EditorRefs {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>
-  fileInputRef: React.RefObject<HTMLInputElement | null>
 }
 
 export interface AlertTypes {
