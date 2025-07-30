@@ -53,6 +53,7 @@
     "remark-math": "^6.0.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
+    "tar": "^7.4.3",
     "tw-animate-css": "^1.3.6",
     "unzipper": "^0.12.3",
     "zod": "^4.0.10"

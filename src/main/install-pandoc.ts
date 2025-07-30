@@ -112,7 +112,7 @@ export function getPandocPath(): string {
   const destDir = getPandocDir()
 
   if (plat === 'win32') {
-    return path.join(destDir, 'pandoc.exe')
+    return path.join(destDir, `pandoc-${version}`, 'pandoc.exe')
   } else {
     return path.join(destDir, 'bin', 'pandoc') // binary is usually in bin/
   }

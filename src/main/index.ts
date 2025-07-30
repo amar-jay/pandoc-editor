@@ -2,7 +2,7 @@ import icon from '../../resources/icon-dark.png?asset'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as os from 'os'
-import { app, shell, dialog, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, shell, dialog, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { ensurePandocInstalled } from './install-pandoc'
@@ -12,25 +12,28 @@ import type { PandocOptions } from '../preload/types'
 import * as pandoc from './pandoc'
 
 function createWindow(): BrowserWindow {
+  const isDarkMode = nativeTheme.shouldUseDarkColors
+  const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 900 / scaleFactor,
+    height: 670 / scaleFactor,
     show: false,
     icon: path.join(app.getAppPath(), 'resources', 'icon-dark.png'),
     autoHideMenuBar: true,
     frame: false, // Remove the default frame for custom styling
     // transparent: true, // Enable transparency for rounded corners
     titleBarOverlay: {
-      color: '#3276e4',
-      height: 34,
-      symbolColor: '#ccc'
+      color: isDarkMode ? '#222' : '#ccc',
+      height: Math.round(34 / scaleFactor),
+      symbolColor: isDarkMode ? '#ccc': '#000'
     },
     titleBarStyle: 'hidden',
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      zoomFactor: 1 / scaleFactor, // Compensate for display scaling
     }
   })
   mainWindow.on('ready-to-show', () => {
@@ -41,6 +44,8 @@ function createWindow(): BrowserWindow {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
+  console.log(screen.getPrimaryDisplay().scaleFactor);
+
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
