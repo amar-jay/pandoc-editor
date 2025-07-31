@@ -118,6 +118,11 @@ export function getPandocPath(): string {
   }
 }
 
+export function isPandocInstalled(): boolean {
+  const binary = getPandocPath()
+  return fs.existsSync(binary)
+}
+
 export function ensurePandocInstalled() {
   const binary = getPandocPath()
   if (!fs.existsSync(binary)) {
@@ -126,5 +131,18 @@ export function ensurePandocInstalled() {
       console.error('❌ Failed to install Pandoc:', err.message)
       process.exit(1)
     })
+  }
+}
+
+export async function installPandocWithProgress(): Promise<{ success: boolean; error?: string }> {
+  try {
+    await installPandoc()
+    return { success: true }
+  } catch (error) {
+    console.error('❌ Failed to install Pandoc:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    }
   }
 }

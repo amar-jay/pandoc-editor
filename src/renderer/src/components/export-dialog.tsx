@@ -3,11 +3,29 @@ import { Card } from './ui/card'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import { Badge } from './ui/badge'
+import { useState } from 'react'
+import { PandocInstallationDialog } from './pandoc-installation-dialog'
 
 interface ExportDialogProps {
   currentFilePath: string
 }
+
 export const ExportDialog = ({ currentFilePath }: ExportDialogProps) => {
+  const [showPandocInstall, setShowPandocInstall] = useState(false)
+
+  const checkPandocAndExport = async (exportFunction: () => Promise<void>) => {
+    try {
+      const result = await window.api.checkPandocInstalled()
+      if (result.success && result.installed) {
+        await exportFunction()
+      } else {
+        setShowPandocInstall(true)
+      }
+    } catch (error) {
+      console.error('Failed to check Pandoc installation:', error)
+      window.api.showAlert('Failed to check Pandoc installation', 'error')
+    }
+  }
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -53,22 +71,24 @@ export const ExportDialog = ({ currentFilePath }: ExportDialogProps) => {
             {/* HTML Export */}
             <Card
               className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
-              onClick={async () => {
-                const result = await window.pandoc.toHTML(currentFilePath)
-                if (result.success) {
-                  window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
+              onClick={() =>
+                checkPandocAndExport(async () => {
+                  const result = await window.pandoc.toHTML(currentFilePath)
+                  if (result.success) {
+                    window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
 
-                  if (result.outputPath) {
-                    console.log('outputpath', result.outputPath)
-                    const e = await window.api.openFile(result.outputPath)
-                    if (!e.success) {
-                      window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                    if (result.outputPath) {
+                      console.log('outputpath', result.outputPath)
+                      const e = await window.api.openFile(result.outputPath)
+                      if (!e.success) {
+                        window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                      }
                     }
+                  } else {
+                    window.api.showAlert(`Failed to export: ${result.error}`, 'error')
                   }
-                } else {
-                  window.api.showAlert(`Failed to export: ${result.error}`, 'error')
-                }
-              }}
+                })
+              }
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-md bg-orange-100 dark:bg-orange-900/20 flex-shrink-0">
@@ -87,20 +107,25 @@ export const ExportDialog = ({ currentFilePath }: ExportDialogProps) => {
             {/* PDF Export */}
             <Card
               className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
-              onClick={async () => {
-                const result = await window.pandoc.toPDF(currentFilePath)
-                if (result.success) {
-                  window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
-                  if (result.outputPath) {
-                    const e = await window.api.openFile(result.outputPath)
-                    if (!e.success) {
-                      window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+              onClick={() =>
+                checkPandocAndExport(async () => {
+                  const result = await window.pandoc.toPDF(currentFilePath)
+                  if (result.success) {
+                    window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
+                    if (result.outputPath) {
+                      const e = await window.api.openFile(result.outputPath)
+                      if (!e.success) {
+                        window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                      }
                     }
+                  } else {
+                    window.api.showAlert(
+                      `Failed to export to PDF. Emojis not supported yet.`,
+                      'error'
+                    )
                   }
-                } else {
-                  window.api.showAlert(`Failed to export to PDF. Emojis not supported yet.`, 'error')
-                }
-              }}
+                })
+              }
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-md bg-red-100 dark:bg-red-900/20 flex-shrink-0">
@@ -119,20 +144,22 @@ export const ExportDialog = ({ currentFilePath }: ExportDialogProps) => {
             {/* Word Export */}
             <Card
               className="p-3 hover:bg-accent/50 transition-colors cursor-pointer group"
-              onClick={async () => {
-                const result = await window.pandoc.toDOCX(currentFilePath)
-                if (result.success) {
-                  window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
-                  if (result.outputPath) {
-                    const e = await window.api.openFile(result.outputPath)
-                    if (!e.success) {
-                      window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+              onClick={() =>
+                checkPandocAndExport(async () => {
+                  const result = await window.pandoc.toDOCX(currentFilePath)
+                  if (result.success) {
+                    window.api.showAlert(`Successfully exported to ${result.outputPath}`, 'info')
+                    if (result.outputPath) {
+                      const e = await window.api.openFile(result.outputPath)
+                      if (!e.success) {
+                        window.api.showAlert(`Failed to open file: ${e.error}`, 'error')
+                      }
                     }
+                  } else {
+                    window.api.showAlert(`Failed to export: ${result.error}`, 'error')
                   }
-                } else {
-                  window.api.showAlert(`Failed to export: ${result.error}`, 'error')
-                }
-              }}
+                })
+              }
             >
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-md bg-blue-100 dark:bg-blue-900/20 flex-shrink-0">
@@ -201,6 +228,13 @@ export const ExportDialog = ({ currentFilePath }: ExportDialogProps) => {
           </div>
         </div>
       </DialogContent>
+      {showPandocInstall && (
+        <PandocInstallationDialog
+          onInstallationComplete={() => {
+            setShowPandocInstall(false)
+          }}
+        />
+      )}
     </Dialog>
   )
 }

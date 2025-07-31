@@ -173,6 +173,10 @@ export interface API {
     error?: string
   }>
   getDefaultPath: () => Promise<{ success: boolean; path?: string; error?: string }>
+
+  // Pandoc installation methods
+  checkPandocInstalled: () => Promise<{ success: boolean; installed?: boolean; error?: string }>
+  installPandoc: () => Promise<{ success: boolean; error?: string }>
 }
 
 declare global {

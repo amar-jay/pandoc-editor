@@ -19,7 +19,10 @@ const api = {
     ipcRenderer.invoke('show-alert', message, type),
   openFile: (filePath: string) => ipcRenderer.invoke('open-file', filePath),
   showOpenDialog: () => ipcRenderer.invoke('show-open-dialog'),
-  getDefaultPath: () => ipcRenderer.invoke('get-default-path')
+  getDefaultPath: () => ipcRenderer.invoke('get-default-path'),
+  // Pandoc installation methods
+  checkPandocInstalled: () => ipcRenderer.invoke('check-pandoc-installed'),
+  installPandoc: () => ipcRenderer.invoke('install-pandoc')
 } satisfies Window['api']
 
 const pandoc = {

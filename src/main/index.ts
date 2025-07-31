@@ -5,7 +5,7 @@ import * as os from 'os'
 import { app, shell, dialog, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { ensurePandocInstalled } from './install-pandoc'
+import { isPandocInstalled, installPandocWithProgress } from './install-pandoc'
 import { buildFileTree, findMarkdownFiles, getDefaultPath, getFilePath } from './filesystem'
 import matter from 'gray-matter'
 import type { PandocOptions } from '../preload/types'
@@ -13,7 +13,7 @@ import * as pandoc from './pandoc'
 
 function createWindow(): BrowserWindow {
   const isDarkMode = nativeTheme.shouldUseDarkColors
-  const scaleFactor = screen.getPrimaryDisplay().scaleFactor;
+  const scaleFactor = screen.getPrimaryDisplay().scaleFactor
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900 / scaleFactor,
@@ -26,14 +26,14 @@ function createWindow(): BrowserWindow {
     titleBarOverlay: {
       color: isDarkMode ? '#222' : '#ccc',
       height: Math.round(34 / scaleFactor),
-      symbolColor: isDarkMode ? '#ccc': '#000'
+      symbolColor: isDarkMode ? '#ccc' : '#000'
     },
     titleBarStyle: 'hidden',
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
-      zoomFactor: 1 / scaleFactor, // Compensate for display scaling
+      zoomFactor: 1 / scaleFactor // Compensate for display scaling
     }
   })
   mainWindow.on('ready-to-show', () => {
@@ -44,8 +44,6 @@ function createWindow(): BrowserWindow {
     shell.openExternal(details.url)
     return { action: 'deny' }
   })
-  console.log(screen.getPrimaryDisplay().scaleFactor);
-
 
   // HMR for renderer base on electron-vite cli.
   // Load the remote URL for development or the local html file for production.
@@ -270,8 +268,36 @@ app.whenReady().then(() => {
     }
   })
 
-  // Ensure Pandoc is installed
-  ensurePandocInstalled()
+  // Check Pandoc installation status (don't auto-install on startup)
+  const pandocInstalled = isPandocInstalled()
+  console.log('Pandoc installation status:', pandocInstalled ? 'installed' : 'not installed')
+
+  // IPC handlers for Pandoc installation
+  ipcMain.handle('check-pandoc-installed', async () => {
+    try {
+      const installed = isPandocInstalled()
+      return { success: true, installed }
+    } catch (error) {
+      console.error('Error checking Pandoc installation:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
+  ipcMain.handle('install-pandoc', async () => {
+    try {
+      const result = await installPandocWithProgress()
+      return result
+    } catch (error) {
+      console.error('Error installing Pandoc:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
 
   // Pandoc conversion IPC handlers
   ipcMain.handle(

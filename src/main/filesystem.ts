@@ -20,7 +20,7 @@ export const getFilePath = async (filePath: string, createDir = false): Promise<
   if (os.platform() !== 'win32') {
     isAbsolute &&= normalizedPath.startsWith('/home')
   } else {
-    isAbsolute &&= path.dirname(normalizedPath) !== "\\"
+    isAbsolute &&= path.dirname(normalizedPath) !== '\\'
   }
 
   // If the path is not absolute, treat it as relative to the default directory

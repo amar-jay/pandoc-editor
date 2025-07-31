@@ -4,6 +4,7 @@ import { WindowsTitlebar } from './components/window-controls-new'
 import { AppSidebar } from './components/sidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { useEditorHook } from './components/hooks/editor-hook'
+import { PandocInstallationDialog } from './components/pandoc-installation-dialog'
 
 function App(): React.JSX.Element {
   // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
@@ -21,6 +22,7 @@ function App(): React.JSX.Element {
           <WindowsTitlebar isZenMode={editorStates.states.isFullscreen} />
           <MarkdownEditor editorStates={editorStates} />
         </SidebarInset>
+        <PandocInstallationDialog />
       </ThemeProvider>
     </SidebarProvider>
   )
